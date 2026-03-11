@@ -1,17 +1,79 @@
 # ICS2017 Programming Assignment
 
-This project is the programming assignment of the class ICS(Introduction to Computer System) in Department of Computer Science and Technology, Nanjing University.
+这是南京大学计算机系统基础课程（ICS, Introduction to Computer System）的配套编程实验仓库。
 
-For the guide of this programming assignment,
-refer to http://nju-ics.gitbooks.io/ics2017-programming-assignment/content/
+实验指导文档可参考：  
+http://nju-ics.gitbooks.io/ics2017-programming-assignment/content/
 
-To initialize, run
+## 环境初始化
+
+首次拉取后，在仓库根目录执行：
+
 ```bash
 bash init.sh
 ```
 
-The following subprojects/components are included. Some of them are not fully implemented.
-* [NEMU](https://github.com/NJU-ProjectN/nemu)
-* [Nexus-am](https://github.com/NJU-ProjectN/nexus-am)
-* [Nanos-lite](https://github.com/NJU-ProjectN/nanos-lite)
-* [Navy-apps](https://github.com/NJU-ProjectN/navy-apps)
+## 仓库组成
+
+本仓库包含以下子项目（部分代码需要在实验过程中逐步补全）：
+
+- [NEMU](https://github.com/NJU-ProjectN/nemu)：教学用指令集模拟器，负责 CPU 指令执行与调试框架。
+- [Nexus-am](https://github.com/NJU-ProjectN/nexus-am)：抽象机层，为上层软件提供统一运行时接口。
+- [Nanos-lite](https://github.com/NJU-ProjectN/nanos-lite)：简化操作系统内核，负责程序加载、系统调用等核心机制。
+- [Navy-apps](https://github.com/NJU-ProjectN/navy-apps)：用户态程序与测试集，用于在运行时环境中验证功能。
+
+## 各 Part 简介(AI总结)
+
+以下是 PA 的常见阶段划分，便于快速理解每个阶段的目标：
+
+- Part 0（PA0）：完成开发环境与工具链准备，熟悉 Git、构建脚本和基本调试流程。
+- Part 1（PA1）：搭建 NEMU 基础框架，完成监视器、表达式求值、断点/监视点等调试功能。
+- Part 2（PA2）：实现核心指令执行路径，逐步让模拟器能够正确运行更多程序并进行功能验证。
+- Part 3（PA3）：打通抽象机与程序运行时，支持程序装载、基础系统调用与批处理执行。
+- Part 4（PA4）：完善设备与操作系统相关机制，提升系统完整性与可运行应用范围。
+
+## 各 PA 完成时间与清单
+
+可按实际完成情况填写日期并勾选条目。
+
+### PA0
+
+- 完成时间：`待填写（YYYY-MM-DD）`
+- [ ] 完成 `init.sh` 初始化并确认子项目可用
+- [ ] 配置并验证编译工具链（`gcc`/`make`/`gdb` 等）
+- [ ] 跑通基础构建流程并记录常用命令
+
+### PA1
+
+- 完成时间：`待填写（YYYY-MM-DD）`
+- [ ] 理解并可使用 NEMU monitor 基本命令
+- [ ] 完成表达式求值相关功能并通过自测
+- [ ] 完成断点/监视点机制并验证触发逻辑
+
+### PA2
+
+- 完成时间：`待填写（YYYY-MM-DD）`
+- [ ] 完成主要指令执行路径并通过基础测试
+- [ ] 修复关键执行错误并补充回归测试
+- [ ] 稳定运行实验要求的程序样例
+
+### PA3
+
+- 完成时间：`待填写（YYYY-MM-DD）`
+- [ ] 打通抽象机层到内核的基础调用链路
+- [ ] 完成程序装载与基础系统调用支持
+- [ ] 验证批处理/多程序执行流程可用
+
+### PA4
+
+- 完成时间：`待填写（YYYY-MM-DD）`
+- [ ] 完善设备相关机制并通过对应测试
+- [ ] 完成内核关键功能收尾并做回归验证
+- [ ] 整理文档与脚本，形成可复现实验环境
+
+## 建议阅读顺序
+
+1. 先阅读实验讲义，对整体目标建立全局认识。
+2. 从 `nemu/` 开始实现与调试，完成基础执行与调试能力。
+3. 再推进 `nexus-am/` 与 `nanos-lite/`，打通内核和运行时。
+4. 使用 `navy-apps/` 进行功能验证与回归测试。
