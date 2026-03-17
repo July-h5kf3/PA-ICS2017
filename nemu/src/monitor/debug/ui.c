@@ -45,34 +45,35 @@ static int cmd_si(char *args) {
 }
 
 static int cmd_info(char *args) {
-  CPU_state cpu;
+  // CPU_state cpu;
   if(args[0] == 'r')
   {
-    printf("EAX  %llx  %lld",cpu.eax,cpu.eax);
-    printf("ECX  %llx  %lld",cpu.ecx,cpu.ecx);
-    printf("EDX  %llx  %lld",cpu.edx,cpu.edx);
-    printf("EBX  %llx  %lld",cpu.ebx,cpu.ebx);
-    printf("ESP  %llx  %lld",cpu.esp,cpu.esp);
-    printf("EBP  %llx  %lld",cpu.ebp,cpu.ebp);
-    printf("ESI  %llx  %lld",cpu.esi,cpu.esi);
-    printf("EDI  %llx  %lld",cpu.edi,cpu.edi);
-    printf("AL   %llx  %lld",reg_b(R_AL));
-    printf("AH   %llx  %lld",reg_b(R_AH));
-    printf("BL   %llx  %lld",reg_b(R_BL));
-    printf("BH   %llx  %lld",reg_b(R_BH));
-    printf("CL   %llx  %lld",reg_b(R_CL));
-    printf("CH   %llx  %lld",reg_b(R_CH));
-    printf("DL   %llx  %lld",reg_b(R_DL));
-    printf("DH   %llx  %lld",reg_b(R_DH));
-    printf("AX   %llx  %lld",reg_b(R_AX));
-    printf("CX   %llx  %lld",reg_b(R_CX));
-    printf("DX   %llx  %lld",reg_b(R_DX));
-    printf("BX   %llx  %lld",reg_b(R_BX));
-    printf("SP   %llx  %lld",reg_b(R_SP));
-    printf("BP   %llx  %lld",reg_b(R_BP));
-    printf("SI   %llx  %lld",reg_b(R_SI));
-    printf("DI   %llx  %lld",reg_b(R_DI));
+    printf("EAX  0x%08x  %u\n", (uint32_t)cpu.eax, (uint32_t)cpu.eax);
+    printf("ECX  0x%08x  %u\n", (uint32_t)cpu.ecx, (uint32_t)cpu.ecx);
+    printf("EDX  0x%08x  %u\n", (uint32_t)cpu.edx, (uint32_t)cpu.edx);
+    printf("EBX  0x%08x  %u\n", (uint32_t)cpu.ebx, (uint32_t)cpu.ebx);
+    printf("ESP  0x%08x  %u\n", (uint32_t)cpu.esp, (uint32_t)cpu.esp);
+    printf("EBP  0x%08x  %u\n", (uint32_t)cpu.ebp, (uint32_t)cpu.ebp);
+    printf("ESI  0x%08x  %u\n", (uint32_t)cpu.esi, (uint32_t)cpu.esi);
+    printf("EDI  0x%08x  %u\n", (uint32_t)cpu.edi, (uint32_t)cpu.edi);
+    printf("AL   0x%02x  %u\n", (uint8_t)reg_b(R_AL), (uint8_t)reg_b(R_AL));
+    printf("AH   0x%02x  %u\n", (uint8_t)reg_b(R_AH), (uint8_t)reg_b(R_AH));
+    printf("BL   0x%02x  %u\n", (uint8_t)reg_b(R_BL), (uint8_t)reg_b(R_BL));
+    printf("BH   0x%02x  %u\n", (uint8_t)reg_b(R_BH), (uint8_t)reg_b(R_BH));
+    printf("CL   0x%02x  %u\n", (uint8_t)reg_b(R_CL), (uint8_t)reg_b(R_CL));
+    printf("CH   0x%02x  %u\n", (uint8_t)reg_b(R_CH), (uint8_t)reg_b(R_CH));
+    printf("DL   0x%02x  %u\n", (uint8_t)reg_b(R_DL), (uint8_t)reg_b(R_DL));
+    printf("DH   0x%02x  %u\n", (uint8_t)reg_b(R_DH), (uint8_t)reg_b(R_DH));
+    printf("AX   0x%04x  %u\n", (uint16_t)reg_w(R_AX), (uint16_t)reg_w(R_AX));
+    printf("CX   0x%04x  %u\n", (uint16_t)reg_w(R_CX), (uint16_t)reg_w(R_CX));
+    printf("DX   0x%04x  %u\n", (uint16_t)reg_w(R_DX), (uint16_t)reg_w(R_DX));
+    printf("BX   0x%04x  %u\n", (uint16_t)reg_w(R_BX), (uint16_t)reg_w(R_BX));
+    printf("SP   0x%04x  %u\n", (uint16_t)reg_w(R_SP), (uint16_t)reg_w(R_SP));
+    printf("BP   0x%04x  %u\n", (uint16_t)reg_w(R_BP), (uint16_t)reg_w(R_BP));
+    printf("SI   0x%04x  %u\n", (uint16_t)reg_w(R_SI), (uint16_t)reg_w(R_SI));
+    printf("DI   0x%04x  %u\n", (uint16_t)reg_w(R_DI), (uint16_t)reg_w(R_DI));
   }
+  return 0;
 }
 
 static int cmd_help(char *args);
