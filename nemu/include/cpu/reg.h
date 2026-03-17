@@ -22,15 +22,16 @@ typedef union
 } Reg;
 
 typedef struct {
-  Reg gpr[8];
-
+  union
+  {
+    Reg gpr[8];
+    rtlreg_t eax, ecx, edx, ebx, esp, ebp, esi, edi;
+  }
   /* Do NOT change the order of the GPRs' definitions. */
 
   /* In NEMU, rtlreg_t is exactly uint32_t. This makes RTL instructions
    * in PA2 able to directly access these registers.
    */
-  rtlreg_t eax, ecx, edx, ebx, esp, ebp, esi, edi;
-
   vaddr_t eip;
 
 } CPU_state;
