@@ -86,6 +86,7 @@ static int cmd_x(char *args) {
     uint32_t data = vaddr_read(i,4);
     printf("0x%04x ",(uint16_t)data);
   }
+  puts("");
   return 0;
 }
 
