@@ -75,6 +75,18 @@ static int cmd_info(char *args) {
   }
   return 0;
 }
+static int cmd_x(char *args) {
+  char *n = strtok(args," ");
+  int num = atoi(n);
+  char* expr = n + strlen(n) + 1;
+  long base = strtol(expr,NULL,16);
+  printf("0x%lx: ",base);
+  for(int i = base;i < base + num * 4;i += 4)
+  {
+    uint32_t data = vaddr_read(i,4);
+  }
+  return 0;
+}
 
 static int cmd_help(char *args);
 
@@ -88,6 +100,7 @@ static struct {
   { "q", "Exit NEMU", cmd_q },
   { "si","Excute Single inst",cmd_si},
   {"info","Print infomation",cmd_info},
+  {"x","Print Memory location",cmd_x},
 
   /* TODO: Add more commands */
 
