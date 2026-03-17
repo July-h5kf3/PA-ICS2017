@@ -40,7 +40,7 @@ static int cmd_si(char *args) {
   int num = 0;
   if(args == NULL)num = 1; 
   else num = atoi(args);
-  for (int i = 0;i < num;i++) cpu_exec();
+  cpu_exec(num);
   return 0;
 }
 
