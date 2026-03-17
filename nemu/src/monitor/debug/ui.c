@@ -44,6 +44,37 @@ static int cmd_si(char *args) {
   return 0;
 }
 
+static int cmd_info(char *args) {
+  CPU_state cpu;
+  if(args[0] == 'r')
+  {
+    printf("EAX  %llx  %lld",cpu.eax,cpu.eax);
+    printf("ECX  %llx  %lld",cpu.ecx,cpu.ecx);
+    printf("EDX  %llx  %lld",cpu.edx,cpu.edx);
+    printf("EBX  %llx  %lld",cpu.ebx,cpu.ebx);
+    printf("ESP  %llx  %lld",cpu.esp,cpu.esp);
+    printf("EBP  %llx  %lld",cpu.ebp,cpu.ebp);
+    printf("ESI  %llx  %lld",cpu.esi,cpu.esi);
+    printf("EDI  %llx  %lld",cpu.edi,cpu.edi);
+    printf("AL   %llx  %lld",reg_b(R_AL));
+    printf("AH   %llx  %lld",reg_b(R_AH));
+    printf("BL   %llx  %lld",reg_b(R_BL));
+    printf("BH   %llx  %lld",reg_b(R_BH));
+    printf("CL   %llx  %lld",reg_b(R_CL));
+    printf("CH   %llx  %lld",reg_b(R_CH));
+    printf("DL   %llx  %lld",reg_b(R_DL));
+    printf("DH   %llx  %lld",reg_b(R_DH));
+    printf("AX   %llx  %lld",reg_b(R_AX));
+    printf("CX   %llx  %lld",reg_b(R_CX));
+    printf("DX   %llx  %lld",reg_b(R_DX));
+    printf("BX   %llx  %lld",reg_b(R_BX));
+    printf("SP   %llx  %lld",reg_b(R_SP));
+    printf("BP   %llx  %lld",reg_b(R_BP));
+    printf("SI   %llx  %lld",reg_b(R_SI));
+    printf("DI   %llx  %lld",reg_b(R_DI));
+  }
+}
+
 static int cmd_help(char *args);
 
 static struct {
@@ -55,6 +86,7 @@ static struct {
   { "c", "Continue the execution of the program", cmd_c },
   { "q", "Exit NEMU", cmd_q },
   { "si","Excute Single inst",cmd_si},
+  {"info","Print infomation",cmd_info},
 
   /* TODO: Add more commands */
 
