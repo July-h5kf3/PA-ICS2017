@@ -73,6 +73,10 @@ static bool is_binary_op(int t)
   || t == TK_NEQ || t == TK_AND || t == TK_OR;
 }
 
+static bool is_value_token(int t) {
+  return t == TK_NUM || t == TK_HEX || t == TK_REG || t == ')';
+}
+
 
 
 static int precedence(int type)
@@ -189,10 +193,14 @@ static bool make_token(char *e) {
   }
   for(int i = 0;i < nr_token;i++)
   {
-    if(tokens[i].type == '-' && (i == 0 || is_binary_op(tokens[i - 1].type) || tokens[i - 1].type == '('))
+    if(tokens[i].type == '-' && (i == 0 || !is_value_token(tokens[i - 1].type)))
       {
         tokens[i].type = TK_NEG;
       }
+    if(tokens[i].type == '*' && (i == 0 || !is_value_token(tokens[i - 1].type)))
+    {
+        tokens[i].type = TK_REF;
+    }
     
   }
 
@@ -292,6 +300,7 @@ uint32_t eval(int p,int q)
     {
       if(tokens[p].type == TK_NEG) return -eval(p+1,q);
       if(tokens[p].type == '!') return !eval(p+1,q);
+      if(tokens[p].type == TK_REF) return vaddr_read(eval(p+1,q),4);
       panic("illegal expression!");
     }
     uint32_t val1 = eval(p,position - 1);
