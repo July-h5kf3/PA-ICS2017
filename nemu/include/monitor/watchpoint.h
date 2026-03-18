@@ -19,6 +19,6 @@ WP* new_wp();
 void free_wp(WP* wp);
 bool check_wp(void);
 void printWP(void);
-void DelPoint(int N);
+void delPoint(int N);
 
 #endif

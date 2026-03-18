@@ -113,7 +113,7 @@ static int cmd_w(char *args)
 static int cmd_d(char *args)
 {
   int N = strtol(args,NULL,10);
-  DelPoint(N);
+  delPoint(N);
   return 0;
 }
 
