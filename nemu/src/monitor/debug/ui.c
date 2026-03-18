@@ -90,6 +90,13 @@ static int cmd_x(char *args) {
   return 0;
 }
 
+static int cmd_p(char *args)
+{
+  bool scucess = false;
+  printf("the result is %d",expr(args,&scucess));
+  return scucess;
+}
+
 static int cmd_help(char *args);
 
 static struct {
@@ -103,6 +110,7 @@ static struct {
   { "si","Excute Single inst",cmd_si},
   {"info","Print infomation",cmd_info},
   {"x","Print Memory location",cmd_x},
+  {"p","excute the result of expr",cmd_p},
 
   /* TODO: Add more commands */
 
