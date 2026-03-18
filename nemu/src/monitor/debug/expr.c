@@ -60,6 +60,19 @@ typedef struct token {
   char str[32];
 } Token;
 
+static int precedence(int type)
+{
+  switch (type)
+  {
+    case TK_EQ: return 1;
+    case '+':  return 2;
+    case '-':  return 2;
+    case '*':  return 3;
+    case '/':  return 3;
+    default:   return -1;
+  }
+}
+
 Token tokens[32];
 int nr_token;
 
@@ -161,8 +174,11 @@ uint32_t eval(int p,int q)
       // printf("%d th token is %c\n",i,tokens[i].type);
       if(num_left == 0 && (tokens[i].type == '+' || tokens[i].type == '-' || tokens[i].type == '*' || tokens[i].type == '/'))
       {
-        dominant_op = &tokens[i];
-        position = i;
+        if(dominant_op == NULL || precedence(tokens[i].type) < precedence(dominant_op->type))
+        {
+          dominant_op = &tokens[i];
+          position = i;  
+        }
       }
       if(tokens[i].type == '(') num_left++;
       else if(tokens[i].type == ')')num_left--;
