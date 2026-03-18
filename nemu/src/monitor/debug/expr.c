@@ -3,12 +3,13 @@
 /* We use the POSIX regex functions to process regular expressions.
  * Type 'man regex' for more information about POSIX regex functions.
  */
+#include <ctype.h>
 #include <sys/types.h>
 #include <regex.h>
 #include <stdlib.h>
 
 enum {
-  TK_NOTYPE = 256, TK_EQ,TK_NUM,TK_NEG,TK_NEQ,TK_AND,TK_OR,TK_HEX,
+  TK_NOTYPE = 256, TK_EQ,TK_NUM,TK_NEG,TK_NEQ,TK_AND,TK_OR,TK_HEX,TK_REG,TK_REF,
 
   /* TODO: Add more token types */
 
@@ -37,6 +38,7 @@ static struct rule {
   {"&&",TK_AND},
   {"\\|\\|",TK_OR},
   {"!",'!'},
+  {"\\$([Ee][Aa][Xx]|[Ee][Cc][Xx]|[Ee][Dd][Xx]|[Ee][Bb][Xx]|[Ee][Ss][Pp]|[Ee][Bb][Pp]|[Ee][Ss][Ii]|[Ee][Dd][Ii]|[Aa][Xx]|[Cc][Xx]|[Dd][Xx]|[Bb][Xx]|[Ss][Pp]|[Bb][Pp]|[Ss][Ii]|[Dd][Ii]|[Aa][Ll]|[Cc][Ll]|[Dd][Ll]|[Bb][Ll]|[Aa][Hh]|[Cc][Hh]|[Dd][Hh]|[Bb][Hh])$",TK_REG},
 };
 
 #define NR_REGEX (sizeof(rules) / sizeof(rules[0]) )
@@ -156,6 +158,19 @@ static bool make_token(char *e) {
             nr_token++;
             break;
           }
+          case TK_REG:
+          {
+            tokens[nr_token].type = rules[i].token_type;
+            Assert(substr_len < sizeof(tokens[nr_token].str),"token too long");
+
+            for (int j = 0; j < substr_len; j++) {
+              tokens[nr_token].str[j] = tolower((unsigned char)substr_start[j]);
+            }
+            tokens[nr_token].str[substr_len] = '\0';
+
+            nr_token++;
+            break;
+          }
           case TK_NOTYPE:
             break;
           default:
@@ -202,6 +217,49 @@ uint32_t eval(int p,int q)
       case TK_HEX:
       {
         return strtol(tokens[p].str,NULL,16);
+      }
+      case TK_REG:
+      {
+        char *reg = tokens[p].str + 1;
+        switch (reg[0]) {
+          case 'e':
+            switch (reg[1]) {
+              case 'a': return cpu.eax;
+              case 'c': return cpu.ecx;
+              case 'd': return cpu.edx;
+              case 'b': return cpu.ebx;
+              case 's': return reg[2] == 'p' ? cpu.esp : cpu.esi;
+              case 'p': return cpu.ebp;
+              default: break;
+            }
+            break;
+          case 'a':
+            return reg[1] == 'x' ? reg_w(R_AX) : reg_b(R_AL);
+          case 'c':
+            return reg[1] == 'x' ? reg_w(R_CX) : reg_b(R_CL);
+          case 'd':
+            return reg[1] == 'x' ? reg_w(R_DX) : reg_b(R_DL);
+          case 'b':
+            if (reg[1] == 'x') return reg_w(R_BX);
+            if (reg[1] == 'p') return reg_w(R_BP);
+            return reg_b(R_BL);
+          case 's':
+            return reg[1] == 'p' ? reg_w(R_SP) : reg_w(R_SI);
+          default:
+            break;
+        }
+
+        if (reg[1] == 'h') {
+          switch (reg[0]) {
+            case 'a': return reg_b(R_AH);
+            case 'c': return reg_b(R_CH);
+            case 'd': return reg_b(R_DH);
+            case 'b': return reg_b(R_BH);
+            default: break;
+          }
+        }
+
+        panic("Unknown register: %s", tokens[p].str);
       }
       default:
         panic("Unknown type!");
