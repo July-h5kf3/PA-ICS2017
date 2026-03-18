@@ -185,6 +185,7 @@ uint32_t eval(int p,int q)
 uint32_t expr(char *e, bool *success) {
   if (!make_token(e)) {
     *success = false;
+    printf("segment fail!");
     return 0;
   }
 
