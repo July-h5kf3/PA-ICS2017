@@ -93,7 +93,7 @@ static int cmd_x(char *args) {
 static int cmd_p(char *args)
 {
   bool scucess = false;
-  printf("the result is %d",expr(args,&scucess));
+  printf("the result is %d\n",expr(args,&scucess));
   return scucess;
 }
 
