@@ -34,7 +34,7 @@ static struct rule {
   {"[0-9]+",TK_NUM},
   {"!=",TK_NEQ},
   {"&&",TK_AND},
-  {"||",TK_OR},
+  {"\\|\\|",TK_OR},
   {"!",'!'},
 };
 
