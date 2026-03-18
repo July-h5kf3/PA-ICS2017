@@ -191,13 +191,13 @@ uint32_t eval(int p,int q)
       if(tokens[i].type == '(') num_left++;
       else if(tokens[i].type == ')')num_left--;
     }
-    uint32_t val1 = eval(p,position - 1);
-    uint32_t val2 = eval(position + 1,q);
     if(dominant_op == NULL) 
     {
       if(tokens[p].type == TK_NEG) return -eval(p+1,q);
       panic("illegal expression!");
     }
+    uint32_t val1 = eval(p,position - 1);
+    uint32_t val2 = eval(position + 1,q);
     switch (dominant_op->type)
     {
       case '+':return val1 + val2;
