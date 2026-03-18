@@ -1,6 +1,7 @@
 #ifndef __WATCHPOINT_H__
 #define __WATCHPOINT_H__
 #define NR_WP 32
+#define WP_EXPR_LEN 128
 #include "common.h"
 
 typedef struct watchpoint {
@@ -8,7 +9,7 @@ typedef struct watchpoint {
   struct watchpoint *next;
 
   /* TODO: Add more members if necessary */
-  char* Address;
+  char Address[WP_EXPR_LEN];
   int last_value;
 
 } WP;

@@ -4,6 +4,7 @@
 #include "nemu.h"
 
 #include <stdlib.h>
+#include <string.h>
 #include <readline/readline.h>
 #include <readline/history.h>
 
@@ -105,9 +106,10 @@ static int cmd_p(char *args)
 static int cmd_w(char *args)
 {
   WP* Insert_wp = new_wp();
-  Insert_wp->Address = args;
+  strncpy(Insert_wp->Address, args, WP_EXPR_LEN - 1);
+  Insert_wp->Address[WP_EXPR_LEN - 1] = '\0';
   bool success = true;
-  Insert_wp->last_value = expr(args,&success);
+  Insert_wp->last_value = expr(Insert_wp->Address,&success);
   return 0;
 }
 static int cmd_d(char *args)
