@@ -131,6 +131,7 @@ bool check_parentheses(int p,int q)
    }
    else if(strcmp(tokens[i].type,")") == 0)
    {
+    if(i != q)return false;
     if(top == 0) return false;
     top--;
    }
