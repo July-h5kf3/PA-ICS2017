@@ -38,16 +38,16 @@ bash init.sh
 
 ### PA0
 
-- 完成时间：`待填写（YYYY-MM-DD）`
-- [ ] 完成 `init.sh` 初始化并确认子项目可用
-- [ ] 配置并验证编译工具链（`gcc`/`make`/`gdb` 等）
-- [ ] 跑通基础构建流程并记录常用命令
+- 完成时间：`20260311`
+- [x] 完成 `init.sh` 初始化并确认子项目可用
+- [x] 配置并验证编译工具链（`gcc`/`make`/`gdb` 等）
+- [x] 跑通基础构建流程并记录常用命令
 
 ### PA1
 
 - 完成时间：`待填写（YYYY-MM-DD）`
-- [ ] 理解并可使用 NEMU monitor 基本命令
-- [ ] 完成表达式求值相关功能并通过自测
+- [x] 理解并可使用 NEMU monitor 基本命令
+- [xjiji sji s jji s j dji s j d sji s j djisjdjj tj t jjtj] 完成表达式求值相关功能并通过自测
 - [ ] 完成断点/监视点机制并验证触发逻辑
 
 ### PA2
