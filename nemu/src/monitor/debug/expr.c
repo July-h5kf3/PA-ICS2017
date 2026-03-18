@@ -8,7 +8,7 @@
 #include <stdlib.h>
 
 enum {
-  TK_NOTYPE = 256, TK_EQ,TK_NUM,TK_NEG,TK_NEQ,TK_AND,TK_OR,
+  TK_NOTYPE = 256, TK_EQ,TK_NUM,TK_NEG,TK_NEQ,TK_AND,TK_OR,TK_HEX,
 
   /* TODO: Add more token types */
 
@@ -32,6 +32,7 @@ static struct rule {
   {"\\(",'('},
   {"\\)",')'},
   {"[0-9]+",TK_NUM},
+  {"0[xX][0-9A-Fa-f]+",TK_HEX},
   {"!=",TK_NEQ},
   {"&&",TK_AND},
   {"\\|\\|",TK_OR},
@@ -144,6 +145,17 @@ static bool make_token(char *e) {
             nr_token++;
             break;
           }
+          case TK_HEX:
+          {
+            tokens[nr_token].type = rules[i].token_type;
+            Assert(substr_len < sizeof(tokens[nr_token].str),"token too long");
+
+            memcpy(tokens[nr_token].str,substr_start,substr_len);
+            tokens[nr_token].str[substr_len] = '\0';
+
+            nr_token++;
+            break;
+          }
           case TK_NOTYPE:
             break;
           default:
@@ -181,7 +193,19 @@ uint32_t eval(int p,int q)
   else if (p == q)
   {
     // printf("qwq");
-    return atoi(tokens[p].str);
+    switch (tokens[p].type)
+    {
+      case TK_NUM:
+      {
+        return strtol(tokens[p].str,NULL,10);
+      }
+      case TK_HEX:
+      {
+        return strtol(tokens[p].str,NULL,16);
+      }
+      default:
+        panic("Unknown type!");
+    }
   }
   else if(check_parentheses(p,q) == true)
   {
