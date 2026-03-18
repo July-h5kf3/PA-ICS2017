@@ -78,9 +78,9 @@ static int cmd_info(char *args) {
 static int cmd_x(char *args) {
   char *n = strtok(args," ");
   int num = atoi(n);
-  char* expr = n + strlen(n) + 1;
-  bool suceess = true;
-  long base = expr(args,&success);
+  char* Expr = n + strlen(n) + 1;
+  bool success = true;
+  long base = expr(Expr,&success);
   printf("0x%lx: ",base);
   for(int i = base;i < base + num * 4;i += 4)
   {
