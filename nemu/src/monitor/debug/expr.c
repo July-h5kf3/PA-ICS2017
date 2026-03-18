@@ -158,7 +158,7 @@ uint32_t eval(int p,int q)
     int num_left = 0;
     for(int i = p;i <= q;i++)
     {
-      printf("%d th token is %c\n",i,tokens[i].type);
+      // printf("%d th token is %c\n",i,tokens[i].type);
       if(num_left == 0 && (tokens[i].type == '+' || tokens[i].type == '-' || tokens[i].type == '*' || tokens[i].type == '/'))
       {
         dominant_op = &tokens[i];
