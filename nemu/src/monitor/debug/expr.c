@@ -121,15 +121,14 @@ static bool make_token(char *e) {
 
 bool check_parentheses(int p,int q)
 {
-  if(!(tokens[p].type == "(" && tokens[q].type == ")"))return false;
   int top = 0;
   for(int i = p;i <= q;i++)
   {
-   if(strcmp(tokens[i].type,"(") == 0)
+   if(tokens[i].type == '(')
    {
     top++;
    }
-   else if(strcmp(tokens[i].type,")") == 0)
+   else if(tokens[i].type == ')')
    {
     if(i != q)return false;
     if(top == 0) return false;
@@ -143,7 +142,7 @@ uint32_t eval(int p,int q)
 {
   if(p > q)
   {
-    Panic("Bad Expression");
+    panic("Bad Expression");
   }
   else if (p == q)
   {
@@ -155,14 +154,14 @@ uint32_t eval(int p,int q)
   }
   else
   {
-    token dominant_op;
+    Token* dominant_op = NULL;
     int position = 0;
     int num_left = 0;
     for(int i = p;i <= q;i++)
     {
       if(num_left == 0 && (tokens[i].type == '+' || tokens[i].type == '-' || tokens[i].type == '*' || tokens[i].type == '/'))
       {
-        dominant_op = tokens[i];
+        dominant_op = &tokens[i];
         position = i;
       }
       if(tokens[i].type == '(') num_left++;
@@ -170,7 +169,8 @@ uint32_t eval(int p,int q)
     }
     uint32_t val1 = eval(p,position - 1);
     uint32_t val2 = eval(position + 1,q);
-    switch (dominant_op.type)
+    if(dominant_op == NULL) panic("illegal expression!");
+    switch (dominant_op->type)
     {
       case '+':return val1 + val2;
       case '-':return val1 - val2;
