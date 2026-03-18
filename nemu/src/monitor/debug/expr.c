@@ -146,6 +146,7 @@ uint32_t eval(int p,int q)
   }
   else if (p == q)
   {
+    printf("qwq");
     return atoi(tokens[p].str);
   }
   else if(check_parentheses(p,q) == true)
