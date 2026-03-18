@@ -70,6 +70,23 @@ static bool is_binary_op(int t)
   || t == TK_NEQ || t == TK_AND || t == TK_OR;
 }
 
+bool check_parentheses(int p,int q)
+{
+  if (tokens[p].type != '(' || tokens[q].type != ')') return false;
+
+  int top = 0;
+  for (int i = p; i <= q; i++) {
+    if (tokens[i].type == '(') top++;
+    else if (tokens[i].type == ')') {
+      if (top == 0) return false;
+      top--;
+      if (top == 0 && i < q) return false;
+    }
+  }
+
+  return top == 0;
+}
+
 static int precedence(int type)
 {
   switch (type)
