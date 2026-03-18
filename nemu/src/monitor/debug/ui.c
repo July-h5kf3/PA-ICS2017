@@ -79,7 +79,8 @@ static int cmd_x(char *args) {
   char *n = strtok(args," ");
   int num = atoi(n);
   char* expr = n + strlen(n) + 1;
-  long base = strtol(expr,NULL,16);
+  bool suceess = true;
+  long base = expr(args,&success);
   printf("0x%lx: ",base);
   for(int i = base;i < base + num * 4;i += 4)
   {
