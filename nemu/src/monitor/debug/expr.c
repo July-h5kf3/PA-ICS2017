@@ -8,7 +8,7 @@
 #include <stdlib.h>
 
 enum {
-  TK_NOTYPE = 256, TK_EQ,TK_NUM,
+  TK_NOTYPE = 256, TK_EQ,TK_NUM,TK_NEG,
 
   /* TODO: Add more token types */
 
@@ -128,6 +128,14 @@ static bool make_token(char *e) {
       return false;
     }
   }
+  for(int i = 0;i < nr_token;i++)
+  {
+    if(tokens[i].type == '-' && (i == 0 || tokens[i - 1].type == '(' || tokens[i - 1].type == '+' ||
+      tokens[i - 1].type == '-' || tokens[i - 1].type == '*' || tokens[i - 1].type == '/' || tokens[i - 1].type == TK_EQ))
+      {
+        tokens[i].type = TK_NEG;
+      }
+  }
 
   return true;
 }
@@ -185,7 +193,11 @@ uint32_t eval(int p,int q)
     }
     uint32_t val1 = eval(p,position - 1);
     uint32_t val2 = eval(position + 1,q);
-    if(dominant_op == NULL) panic("illegal expression!");
+    if(dominant_op == NULL) 
+    {
+      if(tokens[p].type == TK_NEG) return -eval(p+1,q);
+      panic("illegal expression!");
+    }
     switch (dominant_op->type)
     {
       case '+':return val1 + val2;
