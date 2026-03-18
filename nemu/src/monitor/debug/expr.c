@@ -8,7 +8,7 @@
 #include <stdlib.h>
 
 enum {
-  TK_NOTYPE = 256, TK_EQ,TK_NUM,TK_NEG,
+  TK_NOTYPE = 256, TK_EQ,TK_NUM,TK_NEG,TK_NEQ,TK_AND,TK_OR,
 
   /* TODO: Add more token types */
 
@@ -32,6 +32,10 @@ static struct rule {
   {"\\(",'('},
   {"\\)",')'},
   {"[0-9]+",TK_NUM},
+  {"!=",TK_NEQ},
+  {"&&",TK_AND},
+  {"||",TK_OR},
+  {"!",'!'},
 };
 
 #define NR_REGEX (sizeof(rules) / sizeof(rules[0]) )
@@ -60,15 +64,24 @@ typedef struct token {
   char str[32];
 } Token;
 
+static bool is_binary_op(int t)
+{
+  return t == '+' || t == '-' || t == '*' || t == '/' || t == TK_EQ
+  || t == TK_NEQ || t == TK_AND || t == TK_OR;
+}
+
 static int precedence(int type)
 {
   switch (type)
   {
-    case TK_EQ: return 1;
-    case '+':  return 2;
-    case '-':  return 2;
-    case '*':  return 3;
-    case '/':  return 3;
+    case TK_EQ: return 3;
+    case TK_NEQ: return 3;
+    case TK_AND: return 3;
+    case TK_OR: return 3;
+    case '+':  return 1;
+    case '-':  return 1;
+    case '*':  return 2;
+    case '/':  return 2;
     default:   return -1;
   }
 }
@@ -130,31 +143,14 @@ static bool make_token(char *e) {
   }
   for(int i = 0;i < nr_token;i++)
   {
-    if(tokens[i].type == '-' && (i == 0 || tokens[i - 1].type == '(' || tokens[i - 1].type == '+' ||
-      tokens[i - 1].type == '-' || tokens[i - 1].type == '*' || tokens[i - 1].type == '/' || tokens[i - 1].type == TK_EQ))
+    if(tokens[i].type == '-' && (i == 0 || is_binary_op(tokens[i - 1].type)))
       {
         tokens[i].type = TK_NEG;
       }
+    
   }
 
   return true;
-}
-
-bool check_parentheses(int p,int q)
-{
-  if (tokens[p].type != '(' || tokens[q].type != ')') return false;
-
-  int top = 0;
-  for (int i = p; i <= q; i++) {
-    if (tokens[i].type == '(') top++;
-    else if (tokens[i].type == ')') {
-      if (top == 0) return false;
-      top--;
-      if (top == 0 && i < q) return false;
-    }
-  }
-
-  return top == 0;
 }
 
 uint32_t eval(int p,int q)
@@ -180,7 +176,7 @@ uint32_t eval(int p,int q)
     for(int i = p;i <= q;i++)
     {
       // printf("%d th token is %c\n",i,tokens[i].type);
-      if(num_left == 0 && (tokens[i].type == '+' || tokens[i].type == '-' || tokens[i].type == '*' || tokens[i].type == '/'))
+      if(num_left == 0 && is_binary_op(tokens[i].type))
       {
         if(dominant_op == NULL || precedence(tokens[i].type) <= precedence(dominant_op->type))
         {
@@ -194,6 +190,7 @@ uint32_t eval(int p,int q)
     if(dominant_op == NULL) 
     {
       if(tokens[p].type == TK_NEG) return -eval(p+1,q);
+      if(tokens[p].type == '!') return !eval(p+1,q);
       panic("illegal expression!");
     }
     uint32_t val1 = eval(p,position - 1);
@@ -204,12 +201,15 @@ uint32_t eval(int p,int q)
       case '-':return val1 - val2;
       case '*':return val1 * val2;
       case '/':return val1 / val2;
+      case TK_EQ:return val1 == val2;
+      case TK_NEQ: return val1 != val2;
+      case TK_AND: return val1 && val2;
+      case TK_OR:  return val1 || val2;
       default:assert(0);
     }
   }
 
 }
-
 uint32_t expr(char *e, bool *success) {
   if (!make_token(e)) {
     *success = false;
