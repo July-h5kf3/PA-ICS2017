@@ -78,12 +78,12 @@ static int precedence(int type)
   {
     case TK_EQ: return 3;
     case TK_NEQ: return 3;
-    case TK_AND: return 3;
-    case TK_OR: return 3;
-    case '+':  return 1;
-    case '-':  return 1;
-    case '*':  return 2;
-    case '/':  return 2;
+    case TK_AND: return 2;
+    case TK_OR: return 1;
+    case '+':  return 4;
+    case '-':  return 4;
+    case '*':  return 5;
+    case '/':  return 5;
     default:   return -1;
   }
 }
@@ -162,7 +162,7 @@ static bool make_token(char *e) {
   }
   for(int i = 0;i < nr_token;i++)
   {
-    if(tokens[i].type == '-' && (i == 0 || is_binary_op(tokens[i - 1].type)))
+    if(tokens[i].type == '-' && (i == 0 || is_binary_op(tokens[i - 1].type) || tokens[i - 1].type == '('))
       {
         tokens[i].type = TK_NEG;
       }
