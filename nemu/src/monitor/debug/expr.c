@@ -174,7 +174,7 @@ uint32_t eval(int p,int q)
       // printf("%d th token is %c\n",i,tokens[i].type);
       if(num_left == 0 && (tokens[i].type == '+' || tokens[i].type == '-' || tokens[i].type == '*' || tokens[i].type == '/'))
       {
-        if(dominant_op == NULL || precedence(tokens[i].type) < precedence(dominant_op->type))
+        if(dominant_op == NULL || precedence(tokens[i].type) <= precedence(dominant_op->type))
         {
           dominant_op = &tokens[i];
           position = i;  
