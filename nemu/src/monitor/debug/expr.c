@@ -5,9 +5,10 @@
  */
 #include <sys/types.h>
 #include <regex.h>
+#include <stdlib.h>
 
 enum {
-  TK_NOTYPE = 256, TK_EQ
+  TK_NOTYPE = 256, TK_EQ,TK_NUM,
 
   /* TODO: Add more token types */
 
@@ -24,7 +25,13 @@ static struct rule {
 
   {" +", TK_NOTYPE},    // spaces
   {"\\+", '+'},         // plus
-  {"==", TK_EQ}         // equal
+  {"==", TK_EQ},         // equal
+  {"\\-",'-'},
+  {"\\*",'*'},
+  {"/",'/'},
+  {"\\(",'('},
+  {"\\)",')'},
+  {"[0-9]+",TK_NUM},
 };
 
 #define NR_REGEX (sizeof(rules) / sizeof(rules[0]) )
@@ -80,9 +87,25 @@ static bool make_token(char *e) {
          */
 
         switch (rules[i].token_type) {
-          default: TODO();
+          // default: TODO();
+          case TK_NUM:
+          {
+            tokens[nr_token].type = rules[i].token_type;
+            Assert(substr_len < sizeof(tokens[nr_token].str),"token too long");
+            
+            memcpy(tokens[nr_token].str,substr_start,substr_len);
+            tokens[nr_token].str[substr_len] = '\0';
+            
+            nr_token++;
+            break;
+          }
+          case TK_NOTYPE:
+            break;
+          default:
+          {
+            tokens[nr_token++].type = rules[i].token_type;
+          }
         }
-
         break;
       }
     }
@@ -96,6 +119,68 @@ static bool make_token(char *e) {
   return true;
 }
 
+bool check_parentheses(int p,int q)
+{
+  if(!(tokens[p].type == "(" && tokens[q].type == ")"))return false;
+  int top = 0;
+  for(int i = p;i <= q;i++)
+  {
+   if(strcmp(tokens[i].type,"(") == 0)
+   {
+    top++;
+   }
+   else if(strcmp(tokens[i].type,")") == 0)
+   {
+    if(top == 0) return false;
+    top--;
+   }
+  }
+  return top == 0;
+}
+
+uint32_t eval(int p,int q)
+{
+  if(p > q)
+  {
+    Panic("Bad Expression");
+  }
+  else if (p == q)
+  {
+    return atoi(tokens[p].str);
+  }
+  else if(check_parentheses(p,q) == true)
+  {
+    return eval(p + 1,q - 1);
+  }
+  else
+  {
+    token dominant_op;
+    int position = 0;
+    int num_left = 0;
+    for(int i = p;i <= q;i++)
+    {
+      if(num_left == 0 && (tokens[i].type == '+' || tokens[i].type == '-' || tokens[i].type == '*' || tokens[i].type == '/'))
+      {
+        dominant_op = tokens[i];
+        position = i;
+      }
+      if(tokens[i].type == '(') num_left++;
+      else if(tokens[i].type == ')')num_left--;
+    }
+    uint32_t val1 = eval(p,position - 1);
+    uint32_t val2 = eval(position + 1,q);
+    switch (dominant_op.type)
+    {
+      case '+':return val1 + val2;
+      case '-':return val1 - val2;
+      case '*':return val1 * val2;
+      case '/':return val1 / val2;
+      default:assert(0);
+    }
+  }
+
+}
+
 uint32_t expr(char *e, bool *success) {
   if (!make_token(e)) {
     *success = false;
@@ -103,7 +188,9 @@ uint32_t expr(char *e, bool *success) {
   }
 
   /* TODO: Insert codes to evaluate the expression. */
-  TODO();
+  // TODO();
+  int p = 0;
+  int q = nr_token - 1;
 
-  return 0;
+  return eval(p,q);
 }
