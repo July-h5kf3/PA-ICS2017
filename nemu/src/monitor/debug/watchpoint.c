@@ -32,3 +32,26 @@ WP* new_wp()
   return cnt;
 }
 
+void free_wp(WP* wp)
+{
+    if(head == NULL)
+    Assert(0,"There is no WP now!");
+    if(head == wp)head = wp->next;
+    else
+    {
+      WP* DelP = NULL;
+      for(WP* i = head;i;i = i->next)
+      {
+        if(i->next == wp)
+        {
+          DelP = i;
+          break;
+        }
+      }
+      if(DelP == NULL)Assert(0,"WP not found!");
+      DelP->next = wp->next;
+    }
+    wp->next = free_;
+    free_ = wp;
+}
+
