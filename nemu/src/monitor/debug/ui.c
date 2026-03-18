@@ -73,6 +73,10 @@ static int cmd_info(char *args) {
     printf("SI   0x%04x  %u\n", (uint16_t)reg_w(R_SI), (uint16_t)reg_w(R_SI));
     printf("DI   0x%04x  %u\n", (uint16_t)reg_w(R_DI), (uint16_t)reg_w(R_DI));
   }
+  else if(args[0] == 'w')
+  {
+    printWP();
+  }
   return 0;
 }
 static int cmd_x(char *args) {
@@ -98,6 +102,21 @@ static int cmd_p(char *args)
   return scucess;
 }
 
+static int cmd_w(char *args)
+{
+  WP* Insert_wp = new_wp();
+  Insert_wp->Address = args;
+  bool success = true;
+  Insert_wp->last_value = expr(args,&success);
+  return 0;
+}
+static int cmd_d(char *args)
+{
+  int N = strtol(args,NULL,10);
+  DelPoint(N);
+  return 0;
+}
+
 static int cmd_help(char *args);
 
 static struct {
@@ -112,6 +131,8 @@ static struct {
   {"info","Print infomation",cmd_info},
   {"x","Print Memory location",cmd_x},
   {"p","excute the result of expr",cmd_p},
+  {"w","When the expr's value change,Stop",cmd_w},
+  {"d","Delte the WP",cmd_d},
 
   /* TODO: Add more commands */
 

@@ -55,3 +55,38 @@ void free_wp(WP* wp)
     free_ = wp;
 }
 
+bool check_wp(void)
+{
+  for (WP *i = head; i; i = i->next) {
+    bool success = true;
+    uint32_t value = expr(i->Address, &success);
+    if (!success || value == i->last_value) {
+      continue;
+    }
+    printf("The No.%d WatchPoint's value has been changed!\n", i->NO);
+    i->last_value = value;
+    return true;
+  }
+  return false;
+}
+
+void printWP(void)
+{
+  printf("Num  What  LastValue\n");
+  for(WP* i = head;i;i = i->next)
+  {
+    printf("%d  %s  %d\n",i->NO,i->Address,i->last_value);
+  }
+}
+void delPoint(int N)
+{
+  for(WP* i = head;i;i = i->next)
+  {
+    if(i->NO == N)
+    {
+      free_wp(i);
+      return;
+    }
+  }
+  Assert(0,"The WP did not exist!");
+}
