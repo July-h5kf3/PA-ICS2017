@@ -20,6 +20,21 @@ typedef union
   uint16_t _16;
   uint8_t _8[2];
 } Reg;
+typedef union
+{
+  uint32_t val;
+  struct {
+    uint32_t CF : 1;
+    uint32_t    : 5;
+    uint32_t ZF : 1;
+    uint32_t SF : 1;
+    uint32_t    : 1;
+    uint32_t IF : 1;
+    uint32_t    : 1;
+    uint32_t OF : 1;
+    uint32_t    : 20;
+  };
+} EFLAGS;
 
 typedef struct {
   union
@@ -43,6 +58,11 @@ typedef struct {
    * in PA2 able to directly access these registers.
    */
   vaddr_t eip;
+  union
+  {
+    EFLAGS Eflags;
+    rtlreg_t eflags;
+  };
 
 } CPU_state;
 
