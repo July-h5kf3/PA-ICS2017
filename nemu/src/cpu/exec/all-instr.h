@@ -8,6 +8,7 @@ make_EHelper(sub);
 make_EHelper(xor);
 make_EHelper(ret);
 make_EHelper(lea);
+make_EHelper(and);
 
 make_EHelper(operand_size);
 
