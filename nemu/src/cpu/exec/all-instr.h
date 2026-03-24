@@ -6,6 +6,7 @@ make_EHelper(push);
 make_EHelper(pop);
 make_EHelper(sub);
 make_EHelper(xor);
+make_EHelper(ret);
 
 make_EHelper(operand_size);
 
