@@ -51,7 +51,7 @@ make_group(gp2,
 
 static opcode_entry opcode_table_gp3[8] = {
   /* 0x00 */ {concat(decode_, test_I), concat(exec_, test), 0}, EMPTY, EX(not), EMPTY,
-  /* 0x04 */ EMPTY, EX(imul1), EMPTY, EMPTY
+  /* 0x04 */ EMPTY, EX(imul1), EX(div), EX(idiv)
 };
 
 static make_EHelper(gp3) {
@@ -114,7 +114,7 @@ opcode_entry opcode_table [512] = {
   /* 0x8c */	EMPTY, IDEX(lea_M2G,lea), EMPTY, EMPTY,
   /* 0x90 */	EX(nop), IDEX(a2r, xchg), IDEX(a2r, xchg), IDEX(a2r, xchg),
   /* 0x94 */	IDEX(a2r, xchg), IDEX(a2r, xchg), IDEX(a2r, xchg), IDEX(a2r, xchg),
-  /* 0x98 */	EMPTY, EMPTY, EMPTY, EMPTY,
+  /* 0x98 */	EMPTY, EX(cltd), EMPTY, EMPTY,
   /* 0x9c */	EMPTY, EMPTY, EMPTY, EMPTY,
   /* 0xa0 */	IDEXW(O2a, mov, 1), IDEX(O2a, mov), IDEXW(a2O, mov, 1), IDEX(a2O, mov),
   /* 0xa4 */	EMPTY, EMPTY, EMPTY, EMPTY,
