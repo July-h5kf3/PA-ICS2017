@@ -38,7 +38,7 @@ static struct rule {
   {"&&",TK_AND},
   {"\\|\\|",TK_OR},
   {"!",'!'},
-  {"\\$([Ee][Aa][Xx]|[Ee][Cc][Xx]|[Ee][Dd][Xx]|[Ee][Bb][Xx]|[Ee][Ss][Pp]|[Ee][Bb][Pp]|[Ee][Ss][Ii]|[Ee][Dd][Ii]|[Aa][Xx]|[Cc][Xx]|[Dd][Xx]|[Bb][Xx]|[Ss][Pp]|[Bb][Pp]|[Ss][Ii]|[Dd][Ii]|[Aa][Ll]|[Cc][Ll]|[Dd][Ll]|[Bb][Ll]|[Aa][Hh]|[Cc][Hh]|[Dd][Hh]|[Bb][Hh])$",TK_REG},
+  {"\\$([Ee][Aa][Xx]|[Ee][Cc][Xx]|[Ee][Dd][Xx]|[Ee][Bb][Xx]|[Ee][Ss][Pp]|[Ee][Bb][Pp]|[Ee][Ss][Ii]|[Ee][Dd][Ii]|[Ee][Ii][Pp]|[Aa][Xx]|[Cc][Xx]|[Dd][Xx]|[Bb][Xx]|[Ss][Pp]|[Bb][Pp]|[Ss][Ii]|[Dd][Ii]|[Aa][Ll]|[Cc][Ll]|[Dd][Ll]|[Bb][Ll]|[Aa][Hh]|[Cc][Hh]|[Dd][Hh]|[Bb][Hh])",TK_REG},
 };
 
 #define NR_REGEX (sizeof(rules) / sizeof(rules[0]) )
@@ -236,6 +236,7 @@ uint32_t eval(int p,int q)
               case 'c': return cpu.ecx;
               case 'd': return cpu.edx;
               case 'b': return cpu.ebx;
+              case 'i': return cpu.eip;
               case 's': return reg[2] == 'p' ? cpu.esp : cpu.esi;
               case 'p': return cpu.ebp;
               default: break;
