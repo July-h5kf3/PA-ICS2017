@@ -205,6 +205,13 @@ make_DHelper(E) {
   decode_op_rm(eip, id_dest, true, NULL, false);
 }
 
+make_DHelper(gp3_E) {
+  decode_op_rm(eip, id_dest, true, NULL, false);
+  if (decoding.ext_opcode == 0) {
+    decode_test_I(eip);
+  }
+}
+
 make_DHelper(gp7_E) {
   decode_op_rm(eip, id_dest, false, NULL, false);
 }
