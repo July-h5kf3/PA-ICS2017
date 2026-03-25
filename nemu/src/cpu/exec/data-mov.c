@@ -31,7 +31,12 @@ make_EHelper(popa) {
 }
 
 make_EHelper(leave) {
-  TODO();
+  int width = decoding.is_operand_size_16 ? 2 : 4;
+
+  rtl_lr(&t0, R_EBP, width);
+  rtl_mv(&cpu.esp, &t0);
+  rtl_pop(&t1, width);
+  rtl_sr(R_EBP, width, &t1);
 
   print_asm("leave");
 }
