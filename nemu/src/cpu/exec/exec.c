@@ -49,10 +49,14 @@ make_group(gp2,
     EMPTY, EMPTY, EMPTY, EMPTY,
     EX(shl), EX(shr), EMPTY, EX(sar))
 
-  /* 0xf6, 0xf7 */
-make_group(gp3,
-    EX(test), EMPTY, EX(not), EMPTY,
-    EMPTY, EX(imul1), EMPTY, EMPTY)
+static opcode_entry opcode_table_gp3[8] = {
+  /* 0x00 */ {concat(decode_, test_I), concat(exec_, test), 0}, EMPTY, EX(not), EMPTY,
+  /* 0x04 */ EMPTY, EX(imul1), EMPTY, EMPTY
+};
+
+static make_EHelper(gp3) {
+  idex(eip, &opcode_table_gp3[decoding.ext_opcode]);
+}
 
   /* 0xfe */
 make_group(gp4,
