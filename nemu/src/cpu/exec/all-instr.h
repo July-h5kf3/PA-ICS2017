@@ -14,6 +14,7 @@ make_EHelper(xchg);
 make_EHelper(add);
 make_EHelper(adc);
 make_EHelper(inc);
+make_EHelper(dec);
 make_EHelper(or);
 make_EHelper(setcc);
 make_EHelper(movzx);
