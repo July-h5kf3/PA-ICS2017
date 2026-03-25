@@ -18,6 +18,8 @@ make_EHelper(movzx);
 make_EHelper(operand_size);
 make_EHelper(test);
 make_EHelper(jcc);
+make_EHelper(jmp);
+make_EHelper(jmp_rm);
 
 make_EHelper(inv);
 make_EHelper(nemu_trap);
