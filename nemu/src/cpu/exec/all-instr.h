@@ -26,6 +26,7 @@ make_EHelper(not);
 make_EHelper(imul1);
 make_EHelper(imul2);
 make_EHelper(imul3);
+make_EHelper(nop);
 make_EHelper(operand_size);
 make_EHelper(test);
 make_EHelper(jcc);
