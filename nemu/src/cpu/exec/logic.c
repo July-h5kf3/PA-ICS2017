@@ -1,5 +1,9 @@
 #include "cpu/exec.h"
 
+static inline uint32_t rot_mask(int width) {
+  return width == 4 ? 0xffffffffu : ((1u << (width * 8)) - 1);
+}
+
 make_EHelper(test) {
   // TODO();
   rtl_and(&t2,&id_dest->val,&id_src->val);
@@ -67,6 +71,103 @@ make_EHelper(shr) {
   // unnecessary to update CF and OF in NEMU
 
   print_asm_template2(shr);
+}
+
+make_EHelper(rol) {
+  int bits = id_dest->width * 8;
+  uint32_t mask = rot_mask(id_dest->width);
+  uint32_t count = id_src->val & 0x1f;
+  uint32_t n = count % bits;
+  uint32_t val = id_dest->val & mask;
+
+  if (n != 0) {
+    uint32_t res = ((val << n) | (val >> (bits - n))) & mask;
+    id_dest->val = res;
+    operand_write(id_dest, &id_dest->val);
+
+    cpu.Eflags.CF = res & 1;
+    if (n == 1) {
+      cpu.Eflags.OF = ((res >> (bits - 1)) & 1) ^ cpu.Eflags.CF;
+    }
+  }
+
+  print_asm_template2(rol);
+}
+
+make_EHelper(ror) {
+  int bits = id_dest->width * 8;
+  uint32_t mask = rot_mask(id_dest->width);
+  uint32_t count = id_src->val & 0x1f;
+  uint32_t n = count % bits;
+  uint32_t val = id_dest->val & mask;
+
+  if (n != 0) {
+    uint32_t res = ((val >> n) | (val << (bits - n))) & mask;
+    id_dest->val = res;
+    operand_write(id_dest, &id_dest->val);
+
+    cpu.Eflags.CF = (res >> (bits - 1)) & 1;
+    if (n == 1) {
+      cpu.Eflags.OF = ((res >> (bits - 1)) & 1) ^ ((res >> (bits - 2)) & 1);
+    }
+  }
+
+  print_asm_template2(ror);
+}
+
+make_EHelper(rcl) {
+  int bits = id_dest->width * 8;
+  uint32_t mask = rot_mask(id_dest->width);
+  uint32_t count = id_src->val & 0x1f;
+  uint32_t n = count % (bits + 1);
+  uint32_t val = id_dest->val & mask;
+
+  if (n != 0) {
+    uint32_t cf = cpu.Eflags.CF;
+    for (uint32_t i = 0; i < n; i++) {
+      uint32_t new_cf = (val >> (bits - 1)) & 1;
+      val = ((val << 1) | cf) & mask;
+      cf = new_cf;
+    }
+
+    id_dest->val = val;
+    operand_write(id_dest, &id_dest->val);
+
+    cpu.Eflags.CF = cf;
+    if (n == 1) {
+      cpu.Eflags.OF = ((val >> (bits - 1)) & 1) ^ cpu.Eflags.CF;
+    }
+  }
+
+  print_asm_template2(rcl);
+}
+
+make_EHelper(rcr) {
+  int bits = id_dest->width * 8;
+  uint32_t mask = rot_mask(id_dest->width);
+  uint32_t count = id_src->val & 0x1f;
+  uint32_t n = count % (bits + 1);
+  uint32_t val = id_dest->val & mask;
+
+  if (n != 0) {
+    uint32_t cf = cpu.Eflags.CF;
+    for (uint32_t i = 0; i < n; i++) {
+      uint32_t new_cf = val & 1;
+      val = (val >> 1) | (cf << (bits - 1));
+      val &= mask;
+      cf = new_cf;
+    }
+
+    id_dest->val = val;
+    operand_write(id_dest, &id_dest->val);
+
+    cpu.Eflags.CF = cf;
+    if (n == 1) {
+      cpu.Eflags.OF = ((val >> (bits - 1)) & 1) ^ ((val >> (bits - 2)) & 1);
+    }
+  }
+
+  print_asm_template2(rcr);
 }
 
 make_EHelper(setcc) {
