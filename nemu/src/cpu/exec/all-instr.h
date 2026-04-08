@@ -35,6 +35,7 @@ make_EHelper(div);
 make_EHelper(idiv);
 make_EHelper(nop);
 make_EHelper(cltd);
+make_EHelper(cwtl);
 make_EHelper(operand_size);
 make_EHelper(test);
 make_EHelper(jcc);
