@@ -47,6 +47,7 @@ make_EHelper(jmp);
 make_EHelper(jmp_rm);
 make_EHelper(lidt);
 make_EHelper(int);
+make_EHelper(int3);
 
 make_EHelper(inv);
 make_EHelper(nemu_trap);

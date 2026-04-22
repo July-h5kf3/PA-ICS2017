@@ -39,6 +39,16 @@ make_EHelper(int) {
 #endif
 }
 
+make_EHelper(int3) {
+  raise_intr(3, decoding.seq_eip);
+
+  print_asm("int3");
+
+#ifdef DIFF_TEST
+  diff_test_skip_nemu();
+#endif
+}
+
 make_EHelper(iret) {
   TODO();
 
