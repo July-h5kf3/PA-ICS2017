@@ -19,7 +19,17 @@ make_EHelper(pop) {
 }
 
 make_EHelper(pusha) {
-  TODO();
+  int width = decoding.is_operand_size_16 ? 2 : 4;
+  rtlreg_t esp = cpu.esp;
+
+  rtl_push(&cpu.eax, width);
+  rtl_push(&cpu.ecx, width);
+  rtl_push(&cpu.edx, width);
+  rtl_push(&cpu.ebx, width);
+  rtl_push(&esp, width);
+  rtl_push(&cpu.ebp, width);
+  rtl_push(&cpu.esi, width);
+  rtl_push(&cpu.edi, width);
 
   print_asm("pusha");
 }
