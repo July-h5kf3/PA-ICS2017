@@ -67,6 +67,7 @@ typedef struct {
     EFLAGS Eflags;
     rtlreg_t eflags;
   };
+  uint16_t cs;
   IDTR idtr;
 } CPU_state;
 
