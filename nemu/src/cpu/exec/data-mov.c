@@ -35,7 +35,23 @@ make_EHelper(pusha) {
 }
 
 make_EHelper(popa) {
-  TODO();
+  int width = decoding.is_operand_size_16 ? 2 : 4;
+
+  rtl_pop(&t0, width);
+  rtl_sr(R_EDI, width, &t0);
+  rtl_pop(&t0, width);
+  rtl_sr(R_ESI, width, &t0);
+  rtl_pop(&t0, width);
+  rtl_sr(R_EBP, width, &t0);
+  rtl_pop(&t0, width);
+  rtl_pop(&t0, width);
+  rtl_sr(R_EBX, width, &t0);
+  rtl_pop(&t0, width);
+  rtl_sr(R_EDX, width, &t0);
+  rtl_pop(&t0, width);
+  rtl_sr(R_ECX, width, &t0);
+  rtl_pop(&t0, width);
+  rtl_sr(R_EAX, width, &t0);
 
   print_asm("popa");
 }

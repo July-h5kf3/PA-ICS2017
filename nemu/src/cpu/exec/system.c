@@ -50,7 +50,20 @@ make_EHelper(int3) {
 }
 
 make_EHelper(iret) {
-  TODO();
+  int width = decoding.is_operand_size_16 ? 2 : 4;
+
+  rtl_pop(&decoding.jmp_eip, width);
+  rtl_pop(&t0, width);
+  rtl_pop(&t1, width);
+
+  cpu.cs = t0;
+  if (width == 2) {
+    cpu.eflags = (cpu.eflags & 0xffff0000) | (t1 & 0xffff);
+    decoding.jmp_eip &= 0xffff;
+  } else {
+    cpu.eflags = t1;
+  }
+  decoding.is_jmp = 1;
 
   print_asm("iret");
 }
