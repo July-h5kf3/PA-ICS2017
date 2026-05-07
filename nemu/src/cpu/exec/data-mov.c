@@ -112,6 +112,24 @@ make_EHelper(movzx) {
   print_asm_template2(movzx);
 }
 
+make_EHelper(bsr) {
+  id_dest->width = decoding.is_operand_size_16 ? 2 : 4;
+
+  rtl_update_ZF(&id_src->val, id_src->width);
+  if (cpu.Eflags.ZF == 0) {
+    t0 = id_src->val;
+    t1 = 0;
+    while ((t0 >> 1) != 0) {
+      t0 >>= 1;
+      t1++;
+    }
+    operand_write(id_dest, &t1);
+  }
+
+  print_asm("bsr%s %s,%s", decoding.is_operand_size_16 ? "w" : "l",
+      id_dest->str, id_src->str);
+}
+
 make_EHelper(lea) {
   rtl_li(&t2, id_src->addr);
   operand_write(id_dest, &t2);
