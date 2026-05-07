@@ -31,6 +31,19 @@ int _write(int fd, void *buf, size_t count){
 }
 
 void *_sbrk(intptr_t increment){
+  extern char end;
+  static char *cur_brk = NULL;
+  if (cur_brk == NULL) {
+    cur_brk = &end;
+  }
+
+  char *old_brk = cur_brk;
+  char *new_brk = cur_brk + increment;
+  if (_syscall_(SYS_brk, (uintptr_t)new_brk, 0, 0) == 0) {
+    cur_brk = new_brk;
+    return (void *)old_brk;
+  }
+
   return (void *)-1;
 }
 
