@@ -48,25 +48,24 @@ static size_t emit_timer_event(void *buf, size_t len, unsigned int now) {
 
 size_t events_read(void *buf, size_t len) {
   static unsigned long last_time = 0;
-
-  while (1) {
-    int key = _read_key();
-    if (key != _KEY_NONE) {
-      bool keydown = (key & 0x8000) != 0;
-      int code = key & ~0x8000;
-      const char *name = "UNKNOWN";
-      if (code >= 0 && code < (int)(sizeof(keyname) / sizeof(keyname[0])) && keyname[code] != NULL) {
-        name = keyname[code];
-      }
-      return emit_event(buf, len, keydown ? "kd " : "ku ", name);
+  int key = _read_key();
+  if (key != _KEY_NONE) {
+    bool keydown = (key & 0x8000) != 0;
+    int code = key & ~0x8000;
+    const char *name = "UNKNOWN";
+    if (code >= 0 && code < (int)(sizeof(keyname) / sizeof(keyname[0])) && keyname[code] != NULL) {
+      name = keyname[code];
     }
-
-    unsigned long now = _uptime();
-    if (now - last_time >= 1000 / 30) {
-      last_time = now;
-      return emit_timer_event(buf, len, (unsigned int)now);
-    }
+    return emit_event(buf, len, keydown ? "kd " : "ku ", name);
   }
+
+  unsigned long now = _uptime();
+  if (now - last_time >= 1000 / 30) {
+    last_time = now;
+    return emit_timer_event(buf, len, (unsigned int)now);
+  }
+
+  return 0;
 }
 
 static char dispinfo[128] __attribute__((used));
