@@ -5,6 +5,22 @@ make_EHelper(mov) {
   print_asm_template2(mov);
 }
 
+make_EHelper(movs) {
+  int width = decoding.opcode == 0xa4 ? 1 : (decoding.is_operand_size_16 ? 2 : 4);
+  rtl_lr_l(&t0, R_ESI);
+  rtl_lm(&t1, &t0, width);
+  rtl_lr_l(&t2, R_EDI);
+  rtl_sm(&t2, width, &t1);
+
+  int step = ((cpu.Eflags.val >> 10) & 0x1) ? -width : width;
+  rtl_addi(&t0, &t0, step);
+  rtl_addi(&t2, &t2, step);
+  rtl_sr_l(R_ESI, &t0);
+  rtl_sr_l(R_EDI, &t2);
+
+  print_asm("movs%c %%ds:(%%esi),%%es:(%%edi)", suffix_char(width));
+}
+
 make_EHelper(push) {
   rtl_push(&id_dest->val, decoding.is_operand_size_16 ? 2 : 4);
 
