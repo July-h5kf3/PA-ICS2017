@@ -99,6 +99,10 @@ size_t fs_write(int fd, const void *buf, size_t len)
   }
 
   if (fd == FD_FB) {
+    size_t remain = file_table[fd].size - file_table[fd].open_offset;
+    if (len > remain) {
+      len = remain;
+    }
     fb_write(buf, file_table[fd].open_offset, len);
     file_table[fd].open_offset += len;
     return len;
@@ -146,4 +150,5 @@ int fs_close(int fd)
 
 void init_fs() {
   // TODO: initialize the size of /dev/fb
+  file_table[FD_FB].size = _screen.width * _screen.height * sizeof(uint32_t);
 }
