@@ -8,32 +8,63 @@ static const char *keyname[256] __attribute__((used)) = {
   _KEYS(NAME)
 };
 
+static size_t emit_event(void *buf, size_t len, const char *prefix, const char *body) {
+  char *out = (char *)buf;
+  size_t n = 0;
+
+  while (*prefix && n < len) {
+    out[n++] = *prefix++;
+  }
+  while (*body && n < len) {
+    out[n++] = *body++;
+  }
+  if (n < len) {
+    out[n++] = '\n';
+  }
+  return n;
+}
+
+static size_t emit_timer_event(void *buf, size_t len, unsigned int now) {
+  char tmp[16];
+  int digits = 0;
+
+  do {
+    tmp[digits++] = '0' + now % 10;
+    now /= 10;
+  } while (now != 0);
+
+  char *out = (char *)buf;
+  size_t n = 0;
+  if (n < len) out[n++] = 't';
+  if (n < len) out[n++] = ' ';
+  while (digits > 0 && n < len) {
+    out[n++] = tmp[--digits];
+  }
+  if (n < len) {
+    out[n++] = '\n';
+  }
+  return n;
+}
+
 size_t events_read(void *buf, size_t len) {
   static unsigned long last_time = 0;
-  char event[64];
 
   while (1) {
     int key = _read_key();
     if (key != _KEY_NONE) {
       bool keydown = (key & 0x8000) != 0;
       int code = key & ~0x8000;
-      int n = snprintf(event, sizeof(event), "%s %s\n", keydown ? "kd" : "ku", keyname[code]);
-      if ((size_t)n > len) {
-        n = len;
+      const char *name = "UNKNOWN";
+      if (code >= 0 && code < (int)(sizeof(keyname) / sizeof(keyname[0])) && keyname[code] != NULL) {
+        name = keyname[code];
       }
-      memcpy(buf, event, n);
-      return n;
+      return emit_event(buf, len, keydown ? "kd " : "ku ", name);
     }
 
     unsigned long now = _uptime();
     if (now - last_time >= 1000 / 30) {
       last_time = now;
-      int n = snprintf(event, sizeof(event), "t %u\n", (unsigned int)now);
-      if ((size_t)n > len) {
-        n = len;
-      }
-      memcpy(buf, event, n);
-      return n;
+      return emit_timer_event(buf, len, (unsigned int)now);
     }
   }
 }
