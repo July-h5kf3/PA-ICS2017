@@ -38,17 +38,10 @@ static void timer_sig_handler(int signum) {
 }
 
 void device_update() {
-  static int injected = 0;
   if (!device_update_flag) {
     return;
   }
   device_update_flag = false;
-
-  if (!injected && jiffy > TIMER_HZ) {
-    send_key(SDL_SCANCODE_RETURN, true);
-    send_key(SDL_SCANCODE_RETURN, false);
-    injected = 1;
-  }
 
   if (update_screen_flag) {
     update_screen();
