@@ -4,7 +4,7 @@
 
 #define DEFAULT_ENTRY ((void *)0x8048000)
 
-uintptr_t loader(_Protect *as, const char *filename, uintptr_t *brk) {
+uintptr_t loader(_Protect *as, const char *filename) {
   int fd = fs_open(filename, 0, 0);
   size_t size = fs_filesz(fd);
   uintptr_t va = (uintptr_t)DEFAULT_ENTRY;
@@ -25,8 +25,5 @@ uintptr_t loader(_Protect *as, const char *filename, uintptr_t *brk) {
   }
 
   fs_close(fd);
-  if (brk != NULL) {
-    *brk = va + size;
-  }
   return va;
 }

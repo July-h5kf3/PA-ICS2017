@@ -7,14 +7,13 @@ static PCB pcb[MAX_NR_PROC];
 static int nr_proc = 0;
 PCB *current = NULL;
 
-uintptr_t loader(_Protect *as, const char *filename, uintptr_t *brk);
+uintptr_t loader(_Protect *as, const char *filename);
 
 void load_prog(const char *filename) {
   int i = nr_proc ++;
   _protect(&pcb[i].as);
 
-  uintptr_t entry = loader(&pcb[i].as, filename, &pcb[i].cur_brk);
-  pcb[i].max_brk = PGROUNDUP(pcb[i].cur_brk);
+  uintptr_t entry = loader(&pcb[i].as, filename);
 
   uintptr_t ustack_bottom = USTACK_TOP - STACK_SIZE;
   for (uintptr_t va = ustack_bottom; va < USTACK_TOP; va += PGSIZE) {

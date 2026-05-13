@@ -10,6 +10,7 @@ void init_ramdisk(void);
 void init_device(void);
 void init_irq(void);
 void init_fs(void);
+uint32_t loader(_Protect *, const char *);
 
 int main() {
 #ifdef HAS_PTE
