@@ -11,10 +11,10 @@
 uint8_t pmem[PMEM_SIZE];
 
 static inline bool is_page_enabled(void) {
-  return cpu.cr0.paging;
+  return (cpu.cr0.val & 0x80000001) == 0x80000001;
 }
 
-static paddr_t page_translate(vaddr_t addr) {
+static paddr_t page_translate(vaddr_t addr, bool is_write) {
   CR3 cr3 = cpu.cr3;
   paddr_t pgdir_base = cr3.page_directory_base << 12;
 
@@ -22,11 +22,22 @@ static paddr_t page_translate(vaddr_t addr) {
   PDE pde;
   pde.val = paddr_read(pde_addr, 4);
   Assert(pde.present, "PDE not present for vaddr 0x%08x", addr);
+  if (!pde.accessed) {
+    pde.accessed = 1;
+    paddr_write(pde_addr, 4, pde.val);
+  }
 
   paddr_t pte_addr = (pde.page_frame << 12) + (((addr >> 12) & 0x3ff) << 2);
   PTE pte;
   pte.val = paddr_read(pte_addr, 4);
   Assert(pte.present, "PTE not present for vaddr 0x%08x", addr);
+  if (!pte.accessed || (is_write && !pte.dirty)) {
+    pte.accessed = 1;
+    if (is_write) {
+      pte.dirty = 1;
+    }
+    paddr_write(pte_addr, 4, pte.val);
+  }
 
   return (pte.page_frame << 12) | (addr & PAGE_MASK);
 }
@@ -55,16 +66,9 @@ uint32_t vaddr_read(vaddr_t addr, int len) {
     return paddr_read(addr, len);
   }
 
-  if ((addr & ~PAGE_MASK) == ((addr + len - 1) & ~PAGE_MASK)) {
-    return paddr_read(page_translate(addr), len);
-  }
-
-  uint32_t data = 0;
-  int i;
-  for (i = 0; i < len; i ++) {
-    data |= paddr_read(page_translate(addr + i), 1) << (i << 3);
-  }
-  return data;
+  Assert((addr & ~PAGE_MASK) == ((addr + len - 1) & ~PAGE_MASK),
+      "cross-page read at vaddr 0x%08x, len = %d", addr, len);
+  return paddr_read(page_translate(addr, false), len);
 }
 
 void vaddr_write(vaddr_t addr, int len, uint32_t data) {
@@ -73,13 +77,7 @@ void vaddr_write(vaddr_t addr, int len, uint32_t data) {
     return;
   }
 
-  if ((addr & ~PAGE_MASK) == ((addr + len - 1) & ~PAGE_MASK)) {
-    paddr_write(page_translate(addr), len, data);
-    return;
-  }
-
-  int i;
-  for (i = 0; i < len; i ++) {
-    paddr_write(page_translate(addr + i), 1, data >> (i << 3));
-  }
+  Assert((addr & ~PAGE_MASK) == ((addr + len - 1) & ~PAGE_MASK),
+      "cross-page write at vaddr 0x%08x, len = %d", addr, len);
+  paddr_write(page_translate(addr, true), len, data);
 }
