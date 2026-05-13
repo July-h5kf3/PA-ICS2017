@@ -13,8 +13,7 @@
 /* the Control Register 0 */
 typedef union CR0 {
   struct {
-    uint32_t protect_enable      : 1;
-    uint32_t dont_care           : 30;
+    uint32_t dont_care           : 31;
     uint32_t paging              : 1;
   };
   uint32_t val;
