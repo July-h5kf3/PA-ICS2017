@@ -66,8 +66,14 @@ uint32_t vaddr_read(vaddr_t addr, int len) {
     return paddr_read(addr, len);
   }
 
-  Assert((addr & ~PAGE_MASK) == ((addr + len - 1) & ~PAGE_MASK),
-      "cross-page read at vaddr 0x%08x, len = %d", addr, len);
+  if ((addr & ~PAGE_MASK) != ((addr + len - 1) & ~PAGE_MASK)) {
+    int len1 = PAGE_SIZE - (addr & PAGE_MASK);
+    int len2 = len - len1;
+    uint32_t low = paddr_read(page_translate(addr, false), len1);
+    uint32_t high = paddr_read(page_translate(addr + len1, false), len2);
+    return low | (high << (len1 << 3));
+  }
+
   return paddr_read(page_translate(addr, false), len);
 }
 
@@ -77,7 +83,13 @@ void vaddr_write(vaddr_t addr, int len, uint32_t data) {
     return;
   }
 
-  Assert((addr & ~PAGE_MASK) == ((addr + len - 1) & ~PAGE_MASK),
-      "cross-page write at vaddr 0x%08x, len = %d", addr, len);
+  if ((addr & ~PAGE_MASK) != ((addr + len - 1) & ~PAGE_MASK)) {
+    int len1 = PAGE_SIZE - (addr & PAGE_MASK);
+    int len2 = len - len1;
+    paddr_write(page_translate(addr, true), len1, data);
+    paddr_write(page_translate(addr + len1, true), len2, data >> (len1 << 3));
+    return;
+  }
+
   paddr_write(page_translate(addr, true), len, data);
 }
