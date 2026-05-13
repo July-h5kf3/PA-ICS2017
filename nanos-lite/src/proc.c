@@ -22,29 +22,17 @@ void load_prog(const char *filename) {
     _map(&pcb[i].as, (void *)va, pa);
   }
 
-  current = &pcb[i];
-  _switch(&pcb[i].as);
-
-  // Enter the user program with a valid user stack and empty argc/argv/envp.
-  asm volatile (
-    "movl %0, %%esp\n"
-    "pushl $0\n"
-    "pushl $0\n"
-    "pushl $0\n"
-    "call *%1\n"
-    :
-    : "r"(USTACK_TOP), "r"(entry)
-    : "memory"
-  );
-  panic("user program returned");
-
   _Area stack;
   stack.start = pcb[i].stack;
   stack.end = stack.start + sizeof(pcb[i].stack);
 
   pcb[i].tf = _umake(&pcb[i].as, stack, stack, (void *)entry, NULL, NULL);
+  current = &pcb[i];
 }
 
 _RegSet* schedule(_RegSet *prev) {
-  return NULL;
+  (void)prev;
+  assert(current != NULL);
+  _switch(&current->as);
+  return current->tf;
 }

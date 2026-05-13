@@ -91,5 +91,27 @@ void _unmap(_Protect *p, void *va) {
 }
 
 _RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void *entry, char *const argv[], char *const envp[]) {
-  return NULL;
+  (void)p;
+  (void)kstack;
+  (void)argv;
+  (void)envp;
+
+  uintptr_t *sp = (uintptr_t *)ustack.end;
+
+  // Build a fake stack frame for _start(int argc, char **argv, char **envp).
+  // After iret, esp will point here.
+  *--sp = 0;  // fake return address, _start() never returns
+  *--sp = 0;  // argc
+  *--sp = 0;  // argv
+  *--sp = 0;  // envp
+
+  _RegSet *tf = (_RegSet *)((uintptr_t)sp - sizeof(_RegSet));
+  memset(tf, 0, sizeof(*tf));
+
+  tf->eip = (uintptr_t)entry;
+  tf->cs = KSEL(SEG_KCODE);
+  tf->eflags = FL_IF;
+  tf->esp = (uintptr_t)sp;
+
+  return tf;
 }
