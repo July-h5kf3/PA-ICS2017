@@ -2,9 +2,13 @@
 
 void diff_test_skip_qemu();
 void diff_test_skip_nemu();
+void raise_intr(uint8_t NO, vaddr_t ret_addr);
 
 make_EHelper(lidt) {
-  TODO();
+  assert(id_dest->type == OP_TYPE_MEM);
+
+  cpu.idtr.limit = vaddr_read(id_dest->addr, 2);
+  cpu.idtr.base = vaddr_read(id_dest->addr + 2, 4);
 
   print_asm_template1(lidt);
 }
@@ -26,7 +30,7 @@ make_EHelper(mov_cr2r) {
 }
 
 make_EHelper(int) {
-  TODO();
+  raise_intr(id_dest->val, decoding.seq_eip);
 
   print_asm("int %s", id_dest->str);
 
@@ -35,8 +39,31 @@ make_EHelper(int) {
 #endif
 }
 
+make_EHelper(int3) {
+  raise_intr(3, decoding.seq_eip);
+
+  print_asm("int3");
+
+#ifdef DIFF_TEST
+  diff_test_skip_nemu();
+#endif
+}
+
 make_EHelper(iret) {
-  TODO();
+  int width = decoding.is_operand_size_16 ? 2 : 4;
+
+  rtl_pop(&decoding.jmp_eip, width);
+  rtl_pop(&t0, width);
+  rtl_pop(&t1, width);
+
+  cpu.cs = t0;
+  if (width == 2) {
+    cpu.eflags = (cpu.eflags & 0xffff0000) | (t1 & 0xffff);
+    decoding.jmp_eip &= 0xffff;
+  } else {
+    cpu.eflags = t1;
+  }
+  decoding.is_jmp = 1;
 
   print_asm("iret");
 }

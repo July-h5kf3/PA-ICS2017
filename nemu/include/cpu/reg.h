@@ -20,6 +20,10 @@ typedef union
   uint16_t _16;
   uint8_t _8[2];
 } Reg;
+typedef struct{
+  uint16_t limit;
+  uint32_t base;
+} IDTR;
 typedef union
 {
   uint32_t val;
@@ -63,7 +67,8 @@ typedef struct {
     EFLAGS Eflags;
     rtlreg_t eflags;
   };
-
+  uint16_t cs;
+  IDTR idtr;
 } CPU_state;
 
 extern CPU_state cpu;

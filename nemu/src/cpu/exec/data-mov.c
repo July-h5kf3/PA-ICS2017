@@ -5,6 +5,22 @@ make_EHelper(mov) {
   print_asm_template2(mov);
 }
 
+make_EHelper(movs) {
+  int width = decoding.opcode == 0xa4 ? 1 : (decoding.is_operand_size_16 ? 2 : 4);
+  rtl_lr_l(&t0, R_ESI);
+  rtl_lm(&t1, &t0, width);
+  rtl_lr_l(&t2, R_EDI);
+  rtl_sm(&t2, width, &t1);
+
+  int step = ((cpu.Eflags.val >> 10) & 0x1) ? -width : width;
+  rtl_addi(&t0, &t0, step);
+  rtl_addi(&t2, &t2, step);
+  rtl_sr_l(R_ESI, &t0);
+  rtl_sr_l(R_EDI, &t2);
+
+  print_asm("movs%c %%ds:(%%esi),%%es:(%%edi)", suffix_char(width));
+}
+
 make_EHelper(push) {
   rtl_push(&id_dest->val, decoding.is_operand_size_16 ? 2 : 4);
 
@@ -19,13 +35,39 @@ make_EHelper(pop) {
 }
 
 make_EHelper(pusha) {
-  TODO();
+  int width = decoding.is_operand_size_16 ? 2 : 4;
+  rtlreg_t esp = cpu.esp;
+
+  rtl_push(&cpu.eax, width);
+  rtl_push(&cpu.ecx, width);
+  rtl_push(&cpu.edx, width);
+  rtl_push(&cpu.ebx, width);
+  rtl_push(&esp, width);
+  rtl_push(&cpu.ebp, width);
+  rtl_push(&cpu.esi, width);
+  rtl_push(&cpu.edi, width);
 
   print_asm("pusha");
 }
 
 make_EHelper(popa) {
-  TODO();
+  int width = decoding.is_operand_size_16 ? 2 : 4;
+
+  rtl_pop(&t0, width);
+  rtl_sr(R_EDI, width, &t0);
+  rtl_pop(&t0, width);
+  rtl_sr(R_ESI, width, &t0);
+  rtl_pop(&t0, width);
+  rtl_sr(R_EBP, width, &t0);
+  rtl_pop(&t0, width);
+  rtl_pop(&t0, width);
+  rtl_sr(R_EBX, width, &t0);
+  rtl_pop(&t0, width);
+  rtl_sr(R_EDX, width, &t0);
+  rtl_pop(&t0, width);
+  rtl_sr(R_ECX, width, &t0);
+  rtl_pop(&t0, width);
+  rtl_sr(R_EAX, width, &t0);
 
   print_asm("popa");
 }
@@ -84,6 +126,24 @@ make_EHelper(movzx) {
   id_dest->width = decoding.is_operand_size_16 ? 2 : 4;
   operand_write(id_dest, &id_src->val);
   print_asm_template2(movzx);
+}
+
+make_EHelper(bsr) {
+  id_dest->width = decoding.is_operand_size_16 ? 2 : 4;
+
+  rtl_update_ZF(&id_src->val, id_src->width);
+  if (cpu.Eflags.ZF == 0) {
+    t0 = id_src->val;
+    t1 = 0;
+    while ((t0 >> 1) != 0) {
+      t0 >>= 1;
+      t1++;
+    }
+    operand_write(id_dest, &t1);
+  }
+
+  print_asm("bsr%s %s,%s", decoding.is_operand_size_16 ? "w" : "l",
+      id_dest->str, id_src->str);
 }
 
 make_EHelper(lea) {
