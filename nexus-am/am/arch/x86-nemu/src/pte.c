@@ -1,4 +1,5 @@
 #include <x86.h>
+#include <klib.h>
 
 #define PG_ALIGN __attribute((aligned(PGSIZE)))
 
@@ -66,6 +67,24 @@ void _switch(_Protect *p) {
 }
 
 void _map(_Protect *p, void *va, void *pa) {
+  assert((uintptr_t)va % PGSIZE == 0);
+  assert((uintptr_t)pa % PGSIZE == 0);
+
+  PDE *updir = (PDE *)p->ptr;
+  uint32_t pdx = PDX(va);
+  uint32_t ptx = PTX(va);
+
+  if ((updir[pdx] & PTE_P) == 0) {
+    PTE *ptab = (PTE *)palloc_f();
+    assert(ptab != NULL);
+    for (int i = 0; i < NR_PTE; i ++) {
+      ptab[i] = 0;
+    }
+    updir[pdx] = PTE_ADDR(ptab) | PTE_P | PTE_W | PTE_U;
+  }
+
+  PTE *ptab = (PTE *)PTE_ADDR(updir[pdx]);
+  ptab[ptx] = PTE_ADDR(pa) | PTE_P | PTE_W | PTE_U;
 }
 
 void _unmap(_Protect *p, void *va) {
