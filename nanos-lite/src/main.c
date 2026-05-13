@@ -10,7 +10,6 @@ void init_ramdisk(void);
 void init_device(void);
 void init_irq(void);
 void init_fs(void);
-uint32_t loader(_Protect *, const char *);
 
 int main() {
 #ifdef HAS_PTE
@@ -33,7 +32,7 @@ int main() {
 
   // uint32_t entry = loader(NULL, "/bin/pal");
   // ((void (*)(void))entry)();
-  load_prog("/bin/dummy");
+  load_prog("/bin/pal");
 
   panic("Should not reach here");
 }

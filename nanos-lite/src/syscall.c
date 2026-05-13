@@ -1,6 +1,7 @@
 #include "common.h"
 #include "syscall.h"
 #include "fs.h"
+#include "memory.h"
 
 _RegSet* do_syscall(_RegSet *r) {
   uintptr_t a[4];
@@ -31,7 +32,7 @@ _RegSet* do_syscall(_RegSet *r) {
       r->eax = fs_lseek(a[1], a[2], a[3]);
       return r;
     case SYS_brk:
-      r->eax = 0;
+      r->eax = mm_brk(a[1]);
       return r;
     default: panic("Unhandled syscall ID = %d", a[0]);
   }
