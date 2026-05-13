@@ -50,6 +50,8 @@ make_EHelper(jcc);
 make_EHelper(jmp);
 make_EHelper(jmp_rm);
 make_EHelper(lidt);
+make_EHelper(mov_r2cr);
+make_EHelper(mov_cr2r);
 make_EHelper(int);
 make_EHelper(int3);
 make_EHelper(iret);
