@@ -2,9 +2,11 @@
 
 #define MAX_NR_PROC 4
 #define USTACK_TOP  ((uintptr_t)0xc0000000)
+#define PAL_SLICES_PER_HELLO 5
 
 static PCB pcb[MAX_NR_PROC];
 static int nr_proc = 0;
+static int pal_slices = 0;
 PCB *current = NULL;
 
 uintptr_t loader(_Protect *as, const char *filename);
@@ -33,7 +35,16 @@ _RegSet* schedule(_RegSet *prev) {
   if (current != NULL) {
     current->tf = prev;
   }
-  current = (current == &pcb[0] ? &pcb[1] : &pcb[0]);
+  if (current == NULL) {
+    current = &pcb[0];
+  } else if (current == &pcb[0]) {
+    if (++pal_slices >= PAL_SLICES_PER_HELLO) {
+      current = &pcb[1];
+      pal_slices = 0;
+    }
+  } else {
+    current = &pcb[0];
+  }
   _switch(&current->as);
   return current->tf;
 }
