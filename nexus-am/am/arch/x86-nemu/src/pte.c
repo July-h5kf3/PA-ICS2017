@@ -110,9 +110,7 @@ _RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void *entry, char *cons
 
   tf->eip = (uintptr_t)entry;
   tf->cs = KSEL(SEG_KCODE);
-  // Keep interrupts disabled for the first user context so timer IRQs do not
-  // enter the default vecnull handler before nanos-lite implements them.
-  tf->eflags = 0x2;
+  tf->eflags = 0x2 | FL_IF;
   tf->esp = (uintptr_t)sp;
 
   return tf;
