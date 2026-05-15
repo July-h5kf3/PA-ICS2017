@@ -72,6 +72,7 @@ typedef struct {
   CR3 cr3;
   uint16_t cs;
   IDTR idtr;
+  bool INTR;
 } CPU_state;
 
 extern CPU_state cpu;

@@ -13,6 +13,7 @@ void raise_intr(uint8_t NO, vaddr_t ret_addr) {
   vaddr_t intr_addr = (gate_lo & 0xffff) | (gate_hi & 0xffff0000);
 
   rtl_push(&cpu.eflags, 4);
+  cpu.Eflags.IF = 0;
   rtlreg_t cs = cpu.cs;
   rtl_push(&cs, 4);
   rtl_push(&ret_addr, 4);
@@ -22,8 +23,5 @@ void raise_intr(uint8_t NO, vaddr_t ret_addr) {
 }
 
 void dev_raise_intr() {
-  const uint8_t IRQ_TIMER = 32;
-  if (cpu.Eflags.IF) {
-    raise_intr(IRQ_TIMER, cpu.eip);
-  }
+  cpu.INTR = true;
 }

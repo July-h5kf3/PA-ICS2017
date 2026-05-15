@@ -1,6 +1,8 @@
 #include "cpu/exec.h"
 #include "all-instr.h"
 
+void raise_intr(uint8_t NO, vaddr_t ret_addr);
+
 typedef struct {
   DHelper decode;
   EHelper execute;
@@ -224,6 +226,8 @@ static inline void update_eip(void) {
 }
 
 void exec_wrapper(bool print_flag) {
+  const uint8_t IRQ_TIMER = 32;
+
 #ifdef DEBUG
   decoding.p = decoding.asm_buf;
   decoding.p += sprintf(decoding.p, "%8x:   ", cpu.eip);
@@ -247,6 +251,12 @@ void exec_wrapper(bool print_flag) {
 #endif
 
   update_eip();
+
+  if (cpu.INTR && cpu.Eflags.IF) {
+    cpu.INTR = false;
+    raise_intr(IRQ_TIMER, cpu.eip);
+    update_eip();
+  }
 
 #ifdef DIFF_TEST
   void difftest_step(uint32_t);
