@@ -1341,9 +1341,16 @@ static bool emit_insn(const JInstr *in, uint32_t insn_index) {
       return true;
 
     case JOP_CLTD:
-      emit_load_cpu_reg(HR_RAX, R_EAX, 4);
-      emit_sh_imm8(HR_RAX, 7, 31);
-      emit_store_cpu_reg(R_EDX, HR_RAX, 4);
+      if (in->dst.width == 2) {
+        emit_load_cpu_reg(HR_RAX, R_EAX, 2);
+        emit_sh_imm8(HR_RAX, 7, 15);
+        emit_store_cpu_reg(R_EDX, HR_RAX, 2);
+      }
+      else {
+        emit_load_cpu_reg(HR_RAX, R_EAX, 4);
+        emit_sh_imm8(HR_RAX, 7, 31);
+        emit_store_cpu_reg(R_EDX, HR_RAX, 4);
+      }
       return true;
 
     default:
