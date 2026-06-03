@@ -1,28 +1,29 @@
 #ifndef __FLOAT_H__
 #define __FLOAT_H__
 
+#include <stdint.h>
 #include "assert.h"
 
-typedef int FLOAT;
+#define FLOAT_FRAC_BITS 16
+#define FLOAT_ONE       (1 << FLOAT_FRAC_BITS)
 
-static inline int F2int(FLOAT a) {
-  assert(0);
-  return 0;
+typedef int32_t FLOAT;
+
+static inline int32_t F2int(FLOAT a) {
+  return a >> FLOAT_FRAC_BITS;
 }
 
 static inline FLOAT int2F(int a) {
-  assert(0);
-  return 0;
+  return (FLOAT)((uint32_t)a << FLOAT_FRAC_BITS);
 }
 
 static inline FLOAT F_mul_int(FLOAT a, int b) {
-  assert(0);
-  return 0;
+  return (FLOAT)((uint32_t)a * (uint32_t)b);
 }
 
 static inline FLOAT F_div_int(FLOAT a, int b) {
-  assert(0);
-  return 0;
+  assert(b != 0);
+  return a / b;
 }
 
 FLOAT f2F(float);
