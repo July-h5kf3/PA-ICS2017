@@ -57,6 +57,10 @@ typedef enum {
   JOP_JCC,
   JOP_CALL,
   JOP_RET,
+  JOP_SETCC,
+  JOP_LEAVE,
+  JOP_CWTL,
+  JOP_CLTD,
 } JitOp;
 
 typedef enum {
@@ -561,7 +565,7 @@ static JInstr *append_insn(JBlock *b, JitOp op, uint32_t pc, uint32_t next_pc) {
 }
 
 static bool is_tb_end_opcode(uint8_t opcode) {
-  if (opcode == 0xd6 || opcode == 0xcc || opcode == 0xcd || opcode == 0xcf || opcode == 0xff) {
+  if (opcode == 0xd6 || opcode == 0xcc || opcode == 0xcd || opcode == 0xcf) {
     return true;
   }
   return false;
@@ -622,6 +626,20 @@ static bool decode_one(JBlock *b, vaddr_t *pc) {
 
     case 0xc3:
       in = append_insn(b, JOP_RET, start, *pc);
+      return in != NULL;
+
+    case 0xc9:
+      in = append_insn(b, JOP_LEAVE, start, *pc);
+      return in != NULL;
+
+    case 0x98:
+      in = append_insn(b, JOP_CWTL, start, *pc);
+      if (in) op_imm(&in->dst, 0, width);
+      return in != NULL;
+
+    case 0x99:
+      in = append_insn(b, JOP_CLTD, start, *pc);
+      if (in) op_imm(&in->dst, 0, width);
       return in != NULL;
 
     case 0x90:
@@ -831,6 +849,25 @@ static bool decode_one(JBlock *b, vaddr_t *pc) {
       return true;
     }
 
+    case 0xfe:
+    case 0xff: {
+      int w = opcode == 0xfe ? 1 : width;
+      vaddr_t modrm_pc = *pc;
+      uint8_t modrm_byte = vaddr_read(modrm_pc, 1);
+      int ext = (modrm_byte >> 3) & 7;
+      if (ext != 0 && ext != 1 && ext != 2 && ext != 4 && ext != 6) return false;
+      if (opcode == 0xfe && ext != 0 && ext != 1) return false;
+      if (!decode_modrm(pc, &rm, NULL, w, true)) return false;
+      JitOp op = ext == 0 ? JOP_INC :
+                 ext == 1 ? JOP_DEC :
+                 ext == 2 ? JOP_CALL :
+                 ext == 4 ? JOP_JMP : JOP_PUSH;
+      in = append_insn(b, op, start, *pc);
+      if (!in) return false;
+      in->dst = rm;
+      return true;
+    }
+
     case 0xc0:
     case 0xc1:
     case 0xd0:
@@ -868,6 +905,14 @@ static bool decode_one(JBlock *b, vaddr_t *pc) {
         if (!in) return false;
         op_imm(&in->dst, (op2 & 0xf), 1);
         op_imm(&in->src, *pc + off, 4);
+        return true;
+      }
+      if (op2 >= 0x90 && op2 <= 0x9f) {
+        if (!decode_modrm(pc, &rm, NULL, 1, true)) return false;
+        in = append_insn(b, JOP_SETCC, start, *pc);
+        if (!in) return false;
+        in->dst = rm;
+        op_imm(&in->src, op2 & 0xf, 1);
         return true;
       }
       if (op2 == 0xb6 || op2 == 0xb7 || op2 == 0xbe || op2 == 0xbf) {
@@ -942,6 +987,10 @@ static bool can_emit_insn(const JInstr *in) {
     case JOP_JCC:
     case JOP_CALL:
     case JOP_RET:
+    case JOP_SETCC:
+    case JOP_LEAVE:
+    case JOP_CWTL:
+    case JOP_CLTD:
       return true;
     default:
       return false;
@@ -1212,7 +1261,12 @@ static bool emit_insn(const JInstr *in, uint32_t insn_index) {
     }
 
     case JOP_JMP:
-      emit_mov_imm32(HR_RAX, in->dst.imm);
+      if (in->dst.type == O_IMM) {
+        emit_mov_imm32(HR_RAX, in->dst.imm);
+      }
+      else {
+        emit_read_op(&in->dst, HR_RAX);
+      }
       emit_store_membase32(HR_R12, CPU_OFF_EIP, HR_RAX);
       return true;
 
@@ -1225,6 +1279,13 @@ static bool emit_insn(const JInstr *in, uint32_t insn_index) {
       return true;
 
     case JOP_CALL:
+      if (in->dst.type == O_IMM) {
+        emit_mov_imm32(HR_RAX, in->dst.imm);
+      }
+      else {
+        emit_read_op(&in->dst, HR_RAX);
+      }
+      emit_store_membase32(HR_R14, S(0), HR_RAX);
       emit_load_cpu_reg(HR_R11, R_ESP, 4);
       emit_sub_imm32(HR_R11, 4);
       emit_store_cpu_reg(R_ESP, HR_R11, 4);
@@ -1233,7 +1294,7 @@ static bool emit_insn(const JInstr *in, uint32_t insn_index) {
       emit_mov_imm32(HR_RDX, in->next_pc);
       emit_mov_imm64(HR_R10, (uint64_t)(uintptr_t)jit_vaddr_write);
       emit_call_reg(HR_R10);
-      emit_mov_imm32(HR_RAX, in->dst.imm);
+      emit_load_membase32(HR_RAX, HR_R14, S(0));
       emit_store_membase32(HR_R12, CPU_OFF_EIP, HR_RAX);
       return true;
 
@@ -1246,6 +1307,44 @@ static bool emit_insn(const JInstr *in, uint32_t insn_index) {
       emit_load_cpu_reg(HR_R11, R_ESP, 4);
       emit_add_imm32(HR_R11, 4);
       emit_store_cpu_reg(R_ESP, HR_R11, 4);
+      return true;
+
+    case JOP_SETCC:
+      emit_mov_imm32(HR_RDI, in->src.imm);
+      emit_mov_imm64(HR_R10, (uint64_t)(uintptr_t)jit_eval_cc);
+      emit_call_reg(HR_R10);
+      emit_write_op(&in->dst, HR_RAX);
+      return true;
+
+    case JOP_LEAVE:
+      emit_load_cpu_reg(HR_RAX, R_EBP, 4);
+      emit_store_cpu_reg(R_ESP, HR_RAX, 4);
+      emit_mov_rr32(HR_RDI, HR_RAX);
+      emit_mov_imm32(HR_RSI, 4);
+      emit_mov_imm64(HR_R10, (uint64_t)(uintptr_t)jit_vaddr_read);
+      emit_call_reg(HR_R10);
+      emit_store_cpu_reg(R_EBP, HR_RAX, 4);
+      emit_load_cpu_reg(HR_R11, R_ESP, 4);
+      emit_add_imm32(HR_R11, 4);
+      emit_store_cpu_reg(R_ESP, HR_R11, 4);
+      return true;
+
+    case JOP_CWTL:
+      emit_load_cpu_reg(HR_RAX, R_EAX, in->dst.width ? in->dst.width : 2);
+      if (in->dst.width == 2) {
+        emit_movsx8_rr32(HR_RAX, HR_RAX);
+        emit_store_cpu_reg(R_EAX, HR_RAX, 2);
+      }
+      else {
+        emit_movsx16_rr32(HR_RAX, HR_RAX);
+        emit_store_cpu_reg(R_EAX, HR_RAX, 4);
+      }
+      return true;
+
+    case JOP_CLTD:
+      emit_load_cpu_reg(HR_RAX, R_EAX, 4);
+      emit_sh_imm8(HR_RAX, 7, 31);
+      emit_store_cpu_reg(R_EDX, HR_RAX, 4);
       return true;
 
     default:
