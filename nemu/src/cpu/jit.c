@@ -53,6 +53,10 @@ typedef enum {
   JOP_SHL,
   JOP_SHR,
   JOP_SAR,
+  JOP_JMP,
+  JOP_JCC,
+  JOP_CALL,
+  JOP_RET,
 } JitOp;
 
 typedef enum {
@@ -166,6 +170,28 @@ static void jit_set_sub_flags(uint32_t lhs, uint32_t rhs, uint32_t result, uint3
   cpu.Eflags.SF = (result >> (width * 8 - 1)) & 1;
   cpu.Eflags.CF = (lhs < rhs);
   cpu.Eflags.OF = (((lhs ^ rhs) & (lhs ^ result)) >> (width * 8 - 1)) & 1;
+}
+
+static uint32_t jit_eval_cc(uint32_t subcode) {
+  bool invert = subcode & 0x1;
+  uint32_t ret;
+
+  switch (subcode & 0xe) {
+    case 0x0: ret = cpu.Eflags.OF; break;
+    case 0x2: ret = cpu.Eflags.CF; break;
+    case 0x4: ret = cpu.Eflags.ZF; break;
+    case 0x6: ret = cpu.Eflags.CF | cpu.Eflags.ZF; break;
+    case 0x8: ret = cpu.Eflags.SF; break;
+    case 0xc: ret = cpu.Eflags.SF ^ cpu.Eflags.OF; break;
+    case 0xe: ret = cpu.Eflags.ZF | (cpu.Eflags.SF ^ cpu.Eflags.OF); break;
+    default: panic("JIT does not support parity condition code");
+  }
+
+  return invert ? (ret ^ 1) : ret;
+}
+
+static void jit_set_jcc_eip(uint32_t subcode, uint32_t target, uint32_t fallthrough) {
+  cpu.eip = jit_eval_cc(subcode) ? target : fallthrough;
 }
 
 static void jit_handle_irq(uint32_t ret_addr) {
@@ -534,9 +560,7 @@ static JInstr *append_insn(JBlock *b, JitOp op, uint32_t pc, uint32_t next_pc) {
 }
 
 static bool is_tb_end_opcode(uint8_t opcode) {
-  if ((opcode >= 0x70 && opcode <= 0x7f) || opcode == 0xe8 || opcode == 0xe9 ||
-      opcode == 0xeb || opcode == 0xc3 || opcode == 0xd6 || opcode == 0xcc ||
-      opcode == 0xcd || opcode == 0xcf || opcode == 0xff) {
+  if (opcode == 0xd6 || opcode == 0xcc || opcode == 0xcd || opcode == 0xcf || opcode == 0xff) {
     return true;
   }
   return false;
@@ -562,6 +586,43 @@ static bool decode_one(JBlock *b, vaddr_t *pc) {
   JInstr *in;
 
   switch (opcode) {
+    case 0x70 ... 0x7f: {
+      int32_t off = fetch_s(pc, 1);
+      in = append_insn(b, JOP_JCC, start, *pc);
+      if (!in) return false;
+      op_imm(&in->dst, (opcode & 0xf), 1);
+      op_imm(&in->src, *pc + off, 4);
+      return true;
+    }
+
+    case 0xe8: {
+      int32_t off = fetch_s(pc, 4);
+      in = append_insn(b, JOP_CALL, start, *pc);
+      if (!in) return false;
+      op_imm(&in->dst, *pc + off, 4);
+      return true;
+    }
+
+    case 0xe9: {
+      int32_t off = fetch_s(pc, 4);
+      in = append_insn(b, JOP_JMP, start, *pc);
+      if (!in) return false;
+      op_imm(&in->dst, *pc + off, 4);
+      return true;
+    }
+
+    case 0xeb: {
+      int32_t off = fetch_s(pc, 1);
+      in = append_insn(b, JOP_JMP, start, *pc);
+      if (!in) return false;
+      op_imm(&in->dst, *pc + off, 4);
+      return true;
+    }
+
+    case 0xc3:
+      in = append_insn(b, JOP_RET, start, *pc);
+      return in != NULL;
+
     case 0x90:
       in = append_insn(b, JOP_NOP, start, *pc);
       return in != NULL;
@@ -800,6 +861,14 @@ static bool decode_one(JBlock *b, vaddr_t *pc) {
 
     case 0x0f: {
       uint8_t op2 = fetch_u(pc, 1);
+      if (op2 >= 0x80 && op2 <= 0x8f) {
+        int32_t off = fetch_s(pc, 4);
+        in = append_insn(b, JOP_JCC, start, *pc);
+        if (!in) return false;
+        op_imm(&in->dst, (op2 & 0xf), 1);
+        op_imm(&in->src, *pc + off, 4);
+        return true;
+      }
       if (op2 == 0xb6 || op2 == 0xb7 || op2 == 0xbe || op2 == 0xbf) {
         int sw = (op2 == 0xb6 || op2 == 0xbe) ? 1 : 2;
         if (!decode_modrm(pc, &rm, &reg, sw, true)) return false;
@@ -833,6 +902,10 @@ static bool build_block(vaddr_t pc, JBlock *b) {
       cur = before;
       break;
     }
+    JitOp last = b->insn[b->nr - 1].op;
+    if (last == JOP_JMP || last == JOP_JCC || last == JOP_CALL || last == JOP_RET) {
+      break;
+    }
   }
 
   b->end_pc = cur;
@@ -864,6 +937,10 @@ static bool can_emit_insn(const JInstr *in) {
     case JOP_SHL:
     case JOP_SHR:
     case JOP_SAR:
+    case JOP_JMP:
+    case JOP_JCC:
+    case JOP_CALL:
+    case JOP_RET:
       return true;
     default:
       return false;
@@ -1133,6 +1210,43 @@ static bool emit_insn(const JInstr *in, uint32_t insn_index) {
       return true;
     }
 
+    case JOP_JMP:
+      emit_mov_imm32(HR_RAX, in->dst.imm);
+      emit_store_membase32(HR_R12, CPU_OFF_EIP, HR_RAX);
+      return true;
+
+    case JOP_JCC:
+      emit_mov_imm32(HR_RDI, in->dst.imm);
+      emit_mov_imm32(HR_RSI, in->src.imm);
+      emit_mov_imm32(HR_RDX, in->next_pc);
+      emit_mov_imm64(HR_R10, (uint64_t)(uintptr_t)jit_set_jcc_eip);
+      emit_call_reg(HR_R10);
+      return true;
+
+    case JOP_CALL:
+      emit_load_cpu_reg(HR_R11, R_ESP, 4);
+      emit_sub_imm32(HR_R11, 4);
+      emit_store_cpu_reg(R_ESP, HR_R11, 4);
+      emit_mov_rr32(HR_RDI, HR_R11);
+      emit_mov_imm32(HR_RSI, 4);
+      emit_mov_imm32(HR_RDX, in->next_pc);
+      emit_mov_imm64(HR_R10, (uint64_t)(uintptr_t)jit_vaddr_write);
+      emit_call_reg(HR_R10);
+      emit_mov_imm32(HR_RAX, in->dst.imm);
+      emit_store_membase32(HR_R12, CPU_OFF_EIP, HR_RAX);
+      return true;
+
+    case JOP_RET:
+      emit_load_cpu_reg(HR_RDI, R_ESP, 4);
+      emit_mov_imm32(HR_RSI, 4);
+      emit_mov_imm64(HR_R10, (uint64_t)(uintptr_t)jit_vaddr_read);
+      emit_call_reg(HR_R10);
+      emit_store_membase32(HR_R12, CPU_OFF_EIP, HR_RAX);
+      emit_load_cpu_reg(HR_R11, R_ESP, 4);
+      emit_add_imm32(HR_R11, 4);
+      emit_store_cpu_reg(R_ESP, HR_R11, 4);
+      return true;
+
     default:
       return false;
   }
@@ -1164,10 +1278,13 @@ static TB *compile_tb(vaddr_t pc) {
     emitted++;
   }
 
-  emit_mov_imm32(HR_RAX, b.end_pc);
-  emit_store_membase32(HR_R12, CPU_OFF_EIP, HR_RAX);
+  JitOp last = b.insn[b.nr - 1].op;
+  if (last != JOP_JMP && last != JOP_JCC && last != JOP_CALL && last != JOP_RET) {
+    emit_mov_imm32(HR_RAX, b.end_pc);
+    emit_store_membase32(HR_R12, CPU_OFF_EIP, HR_RAX);
+  }
 
-  emit_mov_imm32(HR_RDI, b.end_pc);
+  emit_load_membase32(HR_RDI, HR_R12, CPU_OFF_EIP);
   emit_mov_imm64(HR_R10, (uint64_t)(uintptr_t)jit_handle_irq);
   emit_call_reg(HR_R10);
 
