@@ -100,7 +100,6 @@ typedef struct {
 static TB jit_cache[JIT_CACHE_SIZE];
 static CodeBuf codebuf;
 static uint32_t jit_scratch[JIT_MAX_TB_INSNS * 4];
-static uint64_t jit_hits, jit_misses, jit_fallbacks;
 
 static inline uint32_t cache_index(vaddr_t pc) {
   return ((pc >> 1) ^ (pc >> 11)) & JIT_CACHE_MASK;
@@ -1434,10 +1433,8 @@ uint32_t jit_exec(uint64_t limit) {
 
   TB *tb = &jit_cache[cache_index(cpu.eip)];
   if (tb->code == NULL || tb->pc != cpu.eip) {
-    jit_misses++;
     tb = compile_tb(cpu.eip);
     if (tb == NULL) {
-      jit_fallbacks++;
       return 0;
     }
   }
@@ -1445,7 +1442,6 @@ uint32_t jit_exec(uint64_t limit) {
     return 0;
   }
 
-  jit_hits++;
   uint32_t done = ((tb_func_t)tb->code)(limit);
   return done;
 #else
