@@ -2,6 +2,7 @@
 #include "monitor/monitor.h"
 #include "monitor/watchpoint.h"
 #include "monitor/expr.h"
+#include "cpu/jit.h"
 
 
 /* The assembly code of instructions executed is only output to the screen
@@ -15,6 +16,21 @@ int nemu_state = NEMU_STOP;
 
 void exec_wrapper(bool);
 
+static inline void post_exec_checks(void) {
+#ifdef DEBUG
+  /* TODO: check watchpoints here. */
+  if (check_wp()) {
+    nemu_state = NEMU_STOP;
+  }
+
+#endif
+
+#ifdef HAS_IOE
+  extern void device_update();
+  device_update();
+#endif
+}
+
 /* Simulate how the CPU works. */
 void cpu_exec(uint64_t n) {
   if (nemu_state == NEMU_END) {
@@ -25,23 +41,22 @@ void cpu_exec(uint64_t n) {
 
   bool print_flag = n < MAX_INSTR_TO_PRINT;
 
-  for (; n > 0; n --) {
+  for (; n > 0; ) {
+    if (!print_flag) {
+      uint32_t done = jit_exec(n);
+      if (done > 0) {
+        n -= done;
+        post_exec_checks();
+        if (nemu_state != NEMU_RUNNING) { return; }
+        continue;
+      }
+    }
+
     /* Execute one instruction, including instruction fetch,
      * instruction decode, and the actual execution. */
     exec_wrapper(print_flag);
-
-#ifdef DEBUG
-    /* TODO: check watchpoints here. */
-    if (check_wp()) {
-      nemu_state = NEMU_STOP;
-    }
-
-#endif
-
-#ifdef HAS_IOE
-    extern void device_update();
-    device_update();
-#endif
+    n --;
+    post_exec_checks();
 
     if (nemu_state != NEMU_RUNNING) { return; }
   }

@@ -1,4 +1,5 @@
 #include "nemu.h"
+#include "cpu/jit.h"
 #include <unistd.h>
 
 #define ENTRY_START 0x100000
@@ -139,6 +140,9 @@ int init_monitor(int argc, char *argv[]) {
 
   /* Initialize devices. */
   init_device();
+
+  /* Initialize the translation block cache used by the JIT fast path. */
+  jit_init();
 
   /* Display welcome message. */
   welcome();
