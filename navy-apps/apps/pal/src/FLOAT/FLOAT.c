@@ -16,7 +16,14 @@ F_apply_sign(uint32_t a, int negative)
 }
 
 FLOAT F_mul_F(FLOAT a, FLOAT b) {
-  return (FLOAT)(((int64_t)a * (int64_t)b) >> FLOAT_FRAC_BITS);
+  int32_t a_int = a >> FLOAT_FRAC_BITS;
+  int32_t b_int = b >> FLOAT_FRAC_BITS;
+  uint32_t a_frac = (uint32_t)a & (FLOAT_ONE - 1);
+  uint32_t b_frac = (uint32_t)b & (FLOAT_ONE - 1);
+
+  return (FLOAT)((a_int * b_int << FLOAT_FRAC_BITS) +
+      a_int * (int32_t)b_frac + b_int * (int32_t)a_frac +
+      (FLOAT)((a_frac * b_frac) >> FLOAT_FRAC_BITS));
 }
 
 FLOAT F_div_F(FLOAT a, FLOAT b) {
